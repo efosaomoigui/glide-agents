@@ -1,0 +1,10 @@
+node_modules
+data/output
+data/paperly.db-journal
+.env
+.git
+.gitignore
+*.log
+npm-debug.log
+dashboard/dist
+dashboard/node_modules

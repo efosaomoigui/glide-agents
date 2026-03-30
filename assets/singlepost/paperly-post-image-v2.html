@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paperly – Post V2 · Image Edition</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Space+Mono:wght@400;700&family=Figtree:wght@300;400;500;600&display=swap');
+
+  :root {
+    --ink: #111111;
+    --paper: #FAFAF7;
+    --cream: #EDE8DF;
+    --red: #D63327;
+    --border: #D0CAC0;
+    --muted: rgba(17,17,17,0.42);
+    --sz: 560px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background:var(--cream);
+    min-height:100vh;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    padding:48px 20px; gap:16px;
+    font-family:'Figtree',sans-serif;
+  }
+  .vtag {
+    font-family:'Space Mono',monospace; font-size:10px; letter-spacing:3px;
+    color:var(--ink); text-transform:uppercase;
+    border:1px solid var(--border); padding:5px 14px; border-radius:100px;
+  }
+
+  .post {
+    width:var(--sz); height:var(--sz);
+    position:relative; overflow:hidden;
+    display:flex; flex-direction:column;
+    background:var(--paper);
+    border:1px solid var(--border);
+    box-shadow:0 10px 60px rgba(0,0,0,0.13);
+  }
+
+  .post-img {
+    position:absolute; inset:0;
+    width:100%; height:100%;
+    object-fit:cover; object-position:center 20%;
+  }
+
+  /* Cream wash — heavy left, clear right */
+  .overlay {
+    position:absolute; inset:0;
+    background: linear-gradient(
+      110deg,
+      rgba(250,250,247,0.99) 0%,
+      rgba(250,250,247,0.96) 26%,
+      rgba(250,250,247,0.80) 44%,
+      rgba(250,250,247,0.32) 62%,
+      rgba(250,250,247,0.04) 100%
+    );
+    z-index:1;
+  }
+  /* Bottom white band for footer */
+  .overlay-btm {
+    position:absolute; bottom:0; left:0; right:0; height:190px;
+    background:linear-gradient(to top, rgba(250,250,247,1) 0%, rgba(250,250,247,0.6) 55%, transparent 100%);
+    z-index:1;
+  }
+
+  /* Red corner */
+  .corner {
+    position:absolute; top:0; right:0;
+    width:0; height:0;
+    border-left:88px solid transparent;
+    border-top:88px solid var(--red);
+    z-index:4;
+  }
+  .corner-live {
+    position:absolute; top:13px; right:8px;
+    font-family:'Space Mono',monospace; font-size:7px; letter-spacing:1px;
+    color:rgba(255,255,255,0.85); font-weight:700;
+    writing-mode:vertical-rl; transform:rotate(180deg);
+    text-transform:uppercase; z-index:5;
+  }
+
+  /* Content */
+  .content {
+    position:relative; z-index:3;
+    display:flex; flex-direction:column;
+    height:100%;
+    padding:36px 36px 38px 38px;
+    width:61%;
+  }
+
+  .toprow {
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:14px;
+  }
+  .logo { font-family:'Cormorant Garamond',serif; font-size:22px; font-weight:700; color:var(--ink); }
+  .date-tag {
+    font-family:'Space Mono',monospace; font-size:8px; letter-spacing:1px;
+    color:var(--muted); text-transform:uppercase;
+  }
+
+  .drule { margin-bottom:18px; }
+  .drule .thick { height:3px; background:var(--ink); margin-bottom:3px; }
+  .drule .thin  { height:1px; background:var(--ink); opacity:0.18; }
+
+  .sector-row {
+    display:flex; align-items:center; gap:7px; margin-bottom:16px;
+  }
+  .live-pip { width:5px; height:5px; border-radius:50%; background:var(--red); animation:blink 1.8s ease-in-out infinite; }
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.1}}
+  .sector-tag {
+    font-family:'Space Mono',monospace; font-size:9px; letter-spacing:3px;
+    color:var(--red); text-transform:uppercase; font-weight:700;
+  }
+
+  .headline {
+    font-family:'Cormorant Garamond',serif; font-weight:700; font-size:41px;
+    color:var(--ink); line-height:1.07; letter-spacing:-0.6px;
+    margin-bottom:20px; flex-shrink:0;
+  }
+  .headline em { font-style:italic; color:var(--red); }
+
+  .summary {
+    flex:1;
+    border-left:3px solid var(--red);
+    padding-left:15px;
+    display:flex; align-items:flex-start;
+  }
+  .summary p { font-size:14.5px; color:rgba(17,17,17,0.62); line-height:1.68; }
+
+  .footer {
+    padding-top:24px;
+    border-top:2px solid var(--ink);
+    display:flex; flex-direction:column; gap:11px;
+  }
+  .footer-top { display:flex; justify-content:space-between; align-items:flex-end; }
+  .footer-logo { font-family:'Cormorant Garamond',serif; font-size:28px; font-weight:700; color:var(--ink); line-height:1; }
+  .footer-right { display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
+  .footer-label {
+    font-family:'Space Mono',monospace; font-size:8.5px; letter-spacing:2px;
+    color:var(--red); text-transform:uppercase; opacity:0.7;
+  }
+  .footer-src {
+    font-family:'Space Mono',monospace; font-size:8px; letter-spacing:1px;
+    color:var(--muted); text-transform:uppercase; opacity:0.7;
+  }
+  .footer-url {
+    font-family:'Space Mono',monospace; font-size:9.5px; letter-spacing:2px; color:var(--muted);
+    text-decoration:underline; text-underline-offset:3px;
+    text-decoration-color:rgba(214,51,39,0.3);
+  }
+</style>
+</head>
+<body>
+<div class="vtag">Version 2 · White Magazine · Image</div>
+<div class="post">
+  <img class="post-img" src="https://images.unsplash.com/photo-1575936123452-b67c3203c357?w=900&q=85" alt="news">
+  <div class="overlay"></div>
+  <div class="overlay-btm"></div>
+  <div class="corner"></div>
+  <div class="corner-live">Live</div>
+  <div class="content">
+    <div class="toprow">
+      <div class="logo">PAPERLY.</div>
+      <div class="date-tag" id="ddate"></div>
+    </div>
+    <div class="drule"><div class="thick"></div><div class="thin"></div></div>
+    <div class="sector-row">
+      <div class="live-pip"></div>
+      <span class="sector-tag">Security</span>
+    </div>
+    <div class="headline">Customs Officers Shoot Driver Dead in <em>Osun State</em></div>
+    <div class="summary">
+      <p>NCS operatives allegedly killed a driver on Osogbo/Iwo Road, sparking public outrage and calls for accountability across Osun State.</p>
+    </div>
+    <div class="footer">
+      <div class="footer-top">
+        <div class="footer-logo">PAPERLY.</div>
+        <div class="footer-right">
+          <span class="footer-label">Daily Intelligence</span>
+          <span class="footer-src">The Nation · Punch</span>
+        </div>
+      </div>
+      <div class="footer-url">paperly.online</div>
+    </div>
+  </div>
+</div>
+<script>
+  const d=new Date();
+  document.getElementById('ddate').textContent=d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'}).toUpperCase();
+</script>
+</body>
+</html>

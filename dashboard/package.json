@@ -1,0 +1,12 @@
+{
+  "name": "glide-dashboard",
+  "version": "1.0.0",
+  "description": "GLIDE Admin Dashboard — GlideIntelligence",
+  "scripts": {
+    "dev": "npx serve . -p 4002 -s",
+    "start": "npx serve . -p 4002 -s"
+  },
+  "dependencies": {
+    "serve": "^14.2.3"
+  }
+}

@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paperly – V3 Neon Brutalist</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+
+  :root {
+    --green: #00FF88;
+    --green-dim: rgba(0,255,136,0.12);
+    --green-glow: rgba(0,255,136,0.08);
+    --bg: #080808;
+    --surface: #0E0E0E;
+    --border: #1A1A1A;
+    --text: #FFFFFF;
+    --muted: rgba(255,255,255,0.32);
+    --sz: 560px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background:#040404;
+    min-height:100vh;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    padding:48px 20px; gap:20px;
+    font-family:'IBM Plex Sans',sans-serif;
+  }
+  .vtag { font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:3px; color:var(--green); text-transform:uppercase; border:1px solid var(--green-dim); padding:5px 14px; }
+  .shell { display:flex; align-items:center; gap:14px; }
+  .viewport { width:var(--sz); height:var(--sz); overflow:hidden; position:relative; }
+  .track { display:flex; height:100%; transition:transform 0.5s cubic-bezier(0.77,0,0.18,1); }
+
+  /* ── Base Slide ── */
+  .slide {
+    min-width:var(--sz); height:var(--sz);
+    background:var(--surface);
+    border:1px solid var(--border);
+    position:relative; overflow:hidden;
+    display:flex; flex-direction:column;
+    padding:34px 38px;
+  }
+  /* Scanlines always on top */
+  .slide::before {
+    content:'';
+    position:absolute; inset:0;
+    background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.1) 3px,rgba(0,0,0,0.1) 4px);
+    pointer-events:none; z-index:9;
+  }
+
+  /* ── Story image layers ── */
+  .slide-img {
+    position:absolute; inset:0;
+    width:100%; height:100%;
+    object-fit:cover; object-position:center 20%;
+    opacity:0.52;
+    filter:saturate(0.5) brightness(0.85);
+    z-index:1;
+  }
+  /* Dark gradient left, image bleeds right */
+  .slide-overlay {
+    position:absolute; inset:0;
+    background: linear-gradient(
+      110deg,
+      rgba(13,13,13,0.99) 0%,
+      rgba(13,13,13,0.96) 28%,
+      rgba(13,13,13,0.74) 48%,
+      rgba(13,13,13,0.24) 66%,
+      transparent 100%
+    );
+    z-index:2;
+  }
+  .slide-overlay-btm {
+    position:absolute; bottom:0; left:0; right:0; height:220px;
+    background:linear-gradient(to top, rgba(8,8,8,1) 0%, rgba(8,8,8,0.56) 52%, transparent 100%);
+    z-index:3;
+  }
+  /* Green left accent */
+  .slide-accent {
+    position:absolute; left:0; top:0; bottom:0; width:2px;
+    background:linear-gradient(to bottom, var(--green) 0%, rgba(0,255,136,0.04) 100%);
+    box-shadow:0 0 10px rgba(0,255,136,0.25);
+    z-index:4;
+  }
+  /* Corner brackets on story slides */
+  .slide-br { position:absolute; bottom:36px; right:38px; width:28px; height:28px; border-bottom:2px solid rgba(0,255,136,0.18); border-right:2px solid rgba(0,255,136,0.18); z-index:5; }
+
+  /* Story content in left 62% */
+  .story-inner {
+    position:relative; z-index:7;
+    display:flex; flex-direction:column;
+    height:100%; width:62%;
+  }
+
+  /* ── COVER ── */
+  .s-cover { background:var(--bg); justify-content:space-between; }
+  .s-cover .glow-blob {
+    position:absolute;
+    width:260px; height:260px;
+    background:radial-gradient(circle,var(--green-glow) 0%,transparent 70%);
+    top:-50px; right:-50px; pointer-events:none; z-index:1;
+  }
+  .cover-top { display:flex; justify-content:space-between; align-items:center; position:relative; z-index:2; }
+  .terminal-dots { display:flex; gap:6px; }
+  .td { width:9px; height:9px; border-radius:50%; }
+  .td.r{background:#ff5f57;} .td.y{background:#febc2e;} .td.g{background:#28c840;}
+  .cover-status { display:flex; align-items:center; gap:7px; }
+  .status-pip { width:5px; height:5px; border-radius:50%; background:var(--green); animation:blink 1.5s ease-in-out infinite; box-shadow:0 0 6px var(--green); }
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.12}}
+  .status-text { font-family:'IBM Plex Mono',monospace; font-size:9px; color:rgba(0,255,136,0.48); letter-spacing:2px; text-transform:uppercase; }
+  .cover-body { flex:1; display:flex; flex-direction:column; justify-content:center; gap:10px; position:relative; z-index:2; }
+  .cover-kicker { font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:3px; color:var(--green); text-transform:uppercase; }
+  .cover-title { font-family:'Bebas Neue',sans-serif; font-size:88px; color:var(--text); line-height:0.88; letter-spacing:2px; }
+  .cover-title span { color:var(--green); text-shadow:0 0 24px rgba(0,255,136,0.4); display:block; }
+  .cover-sub { font-size:13px; color:var(--muted); line-height:1.55; max-width:300px; }
+  .cursor { width:10px; height:18px; background:var(--green); animation:blink 1s step-end infinite; display:inline-block; vertical-align:middle; margin-left:4px; }
+  .cover-footer {
+    display:flex; justify-content:space-between; align-items:center;
+    border-top:1px solid var(--border); padding-top:14px; position:relative; z-index:2;
+  }
+  .logo { font-family:'Bebas Neue',sans-serif; font-size:22px; color:var(--text); letter-spacing:3px; }
+  .logo span { color:var(--green); text-shadow:0 0 8px rgba(0,255,136,0.4); }
+  .cover-url { font-family:'IBM Plex Mono',monospace; font-size:9px; color:rgba(255,255,255,0.15); letter-spacing:1px; }
+
+  /* ── STORY ── */
+  .story-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:0; }
+  .sector-badge {
+    font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:3px;
+    color:var(--green); text-transform:uppercase;
+    display:flex; align-items:center; gap:7px;
+  }
+  .live-pip { width:5px; height:5px; border-radius:50%; background:var(--green); animation:blink 1.8s ease-in-out infinite; box-shadow:0 0 6px var(--green); }
+  .slide-num { font-family:'IBM Plex Mono',monospace; font-size:9px; color:rgba(255,255,255,0.12); letter-spacing:1px; }
+  .slash-rule { margin:12px 0; display:flex; align-items:center; gap:8px; }
+  .slash-line { flex:1; height:1px; background:linear-gradient(90deg,var(--green) 0%,transparent 70%); opacity:0.28; }
+  .slash-text { font-family:'IBM Plex Mono',monospace; font-size:9px; color:rgba(0,255,136,0.24); letter-spacing:1px; white-space:nowrap; }
+  .headline {
+    font-family:'Bebas Neue',sans-serif; font-size:40px;
+    color:var(--text); line-height:0.96; letter-spacing:1px;
+    margin-bottom:18px;
+    text-shadow:0 2px 20px rgba(0,0,0,0.9);
+  }
+  .bullets { display:flex; flex-direction:column; gap:12px; flex:1; justify-content:center; }
+  .bullet { display:flex; gap:10px; align-items:flex-start; }
+  .bull-arrow { font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--green); flex-shrink:0; margin-top:2px; line-height:1.55; }
+  .bull-text { font-size:13px; color:rgba(255,255,255,0.52); line-height:1.6; text-shadow:0 1px 8px rgba(0,0,0,0.95); }
+  .story-footer {
+    display:flex; justify-content:space-between; align-items:center;
+    border-top:1px solid rgba(255,255,255,0.07);
+    padding-top:14px; margin-top:auto;
+  }
+  .story-meta { font-family:'IBM Plex Mono',monospace; font-size:9px; color:rgba(255,255,255,0.15); letter-spacing:1px; text-transform:uppercase; }
+  .story-logo { font-family:'Bebas Neue',sans-serif; font-size:15px; color:rgba(255,255,255,0.08); letter-spacing:2px; }
+  .story-logo span { color:rgba(0,255,136,0.14); }
+
+  /* ── CTA ── */
+  .s-cta { background:var(--green); border-color:var(--green); justify-content:space-between; }
+  .s-cta::before { display:none; }
+  .s-cta .watermark {
+    position:absolute;
+    font-family:'Bebas Neue',sans-serif; font-size:240px;
+    color:rgba(0,0,0,0.055); bottom:-36px; right:-12px; line-height:1; letter-spacing:4px;
+    pointer-events:none; z-index:1;
+  }
+  .cta-label { font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:3px; color:rgba(0,0,0,0.35); text-transform:uppercase; position:relative; z-index:2; }
+  .cta-body { flex:1; display:flex; flex-direction:column; justify-content:center; gap:12px; position:relative; z-index:2; }
+  .cta-headline { font-family:'Bebas Neue',sans-serif; font-size:70px; color:#080808; line-height:0.9; letter-spacing:2px; }
+  .cta-sub { font-size:13px; color:rgba(0,0,0,0.4); line-height:1.58; max-width:300px; }
+  .cta-footer { display:flex; justify-content:space-between; align-items:center; position:relative; z-index:2; }
+  .cta-btn {
+    background:#080808; color:var(--green);
+    font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:3px; text-transform:uppercase;
+    padding:12px 22px; border:none; cursor:pointer; font-weight:700;
+  }
+  .cta-logo { font-family:'Bebas Neue',sans-serif; font-size:20px; color:rgba(0,0,0,0.2); letter-spacing:3px; }
+
+  /* ── Controls ── */
+  .nav-btn {
+    width:40px; height:40px;
+    background:transparent; border:1px solid var(--border);
+    color:var(--green); font-size:20px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0; transition:all 0.2s;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  .nav-btn:hover { background:var(--green); color:#080808; border-color:var(--green); }
+  .controls { display:flex; align-items:center; gap:14px; }
+  .dots { display:flex; gap:6px; }
+  .dot { width:5px; height:5px; background:var(--border); cursor:pointer; transition:all 0.25s; }
+  .dot.active { background:var(--green); width:18px; box-shadow:0 0 8px rgba(0,255,136,0.4); }
+  .counter { font-family:'IBM Plex Mono',monospace; font-size:10px; color:rgba(0,255,136,0.24); letter-spacing:2px; }
+</style>
+</head>
+<body>
+<div class="vtag">Version 3 · Neon Brutalist</div>
+
+<div class="shell">
+  <button class="nav-btn" onclick="prev()">←</button>
+  <div class="viewport">
+    <div class="track" id="track">
+
+      <!-- SLIDE 1: COVER -->
+      <div class="slide s-cover">
+        <div class="glow-blob"></div>
+        <div class="cover-top">
+          <div class="terminal-dots"><div class="td r"></div><div class="td y"></div><div class="td g"></div></div>
+          <div class="cover-status"><div class="status-pip"></div><span class="status-text" id="cdate"></span></div>
+        </div>
+        <div class="cover-body">
+          <span class="cover-kicker">Nigeria &amp; West Africa · Daily Intel</span>
+          <div class="cover-title">INTEL<br>BRIEF<span>TODAY.<div class="cursor"></div></span></div>
+          <p class="cover-sub">The stories shaping the region — synthesized, ranked, and ready in 60 seconds.</p>
+        </div>
+        <div class="cover-footer">
+          <div class="logo">PAPERLY<span>.</span></div>
+          <span class="cover-url">paperly.online</span>
+        </div>
+      </div>
+
+      <!-- SLIDE 2 -->
+      <div class="slide s-story">
+        <img class="slide-img" src="https://images.unsplash.com/photo-1575936123452-b67c3203c357?w=900&q=85" alt="news">
+        <div class="slide-overlay"></div>
+        <div class="slide-overlay-btm"></div>
+        <div class="slide-accent"></div>
+        <div class="slide-br"></div>
+        <div class="story-inner">
+          <div class="story-head">
+            <span class="sector-badge"><span class="live-pip"></span>Security</span>
+            <span class="slide-num">01 / 03</span>
+          </div>
+          <div class="slash-rule"><div class="slash-line"></div><span class="slash-text">// TOP STORY</span></div>
+          <div class="headline">CUSTOMS OFFICERS SHOOT DRIVER DEAD IN OSUN STATE</div>
+          <div class="bullets">
+            <div class="bullet"><span class="bull-arrow">›</span><span class="bull-text">NCS operatives allegedly shot a driver on Osogbo/Iwo Road in Onibueja community, Osun State</span></div>
+            <div class="bullet"><span class="bull-arrow">›</span><span class="bull-text">The incident triggered immediate public outrage; residents blocked the road in protest</span></div>
+            <div class="bullet"><span class="bull-arrow">›</span><span class="bull-text">Community leaders demand a full investigation and accountability from NCS command</span></div>
+          </div>
+          <div class="story-footer">
+            <span class="story-meta">2 Sources · 1 day ago</span>
+            <span class="story-logo">PAPERLY<span>.</span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 3 -->
+      <div class="slide s-story">
+        <img class="slide-img" src="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=900&q=85" alt="news">
+        <div class="slide-overlay"></div>
+        <div class="slide-overlay-btm"></div>
+        <div class="slide-accent"></div>
+        <div class="slide-br"></div>
+        <div class="story-inner">
+          <div class="story-head">
+            <span class="sector-badge"><span class="live-pip"></span>Economy</span>
+            <span class="slide-num">02 / 03</span>
+          </div>
+          <div class="slash-rule"><div class="slash-line"></div><span class="slash-text">// MARKET INTEL</span></div>
+          <div class="headline">CBN HOLDS RATE AS NAIRA POSTS GAINS AND RESERVES GROW</div>
+          <div class="bullets">
+            <div class="bullet"><span class="bull-arrow">›</span><span class="bull-text">Central Bank holds benchmark rate steady at its latest Monetary Policy Committee meeting</span></div>
+            <div class="bullet"><span class="bull-arrow">›</span><span class="bull-text">Naira recorded gains this week, lifting overall economic sentiment by +18%</span></div>
+            <div class="bullet"><span class="bull-arrow">›</span><span class="bull-text">Foreign reserve growth signals an improved external balance sheet heading into Q2 2026</span></div>
+          </div>
+          <div class="story-footer">
+            <span class="story-meta">3 Sources · This Week</span>
+            <span class="story-logo">PAPERLY<span>.</span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 4 -->
+      <div class="slide s-story">
+        <img class="slide-img" src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=900&q=85" alt="news">
+        <div class="slide-overlay"></div>
+        <div class="slide-overlay-btm"></div>
+        <div class="slide-accent"></div>
+        <div class="slide-br"></div>
+        <div class="story-inner">
+          <div class="story-head">
+            <span class="sector-badge"><span class="live-pip"></span>Regional</span>
+            <span class="slide-num">03 / 03</span>
+          </div>
+          <div class="slash-rule"><div class="slash-line"></div><span class="slash-text">// DEVELOPING</span></div>
+          <div class="headline">ECOWAS STABILITY AT RISK AS SAHEL STATES FORMALIZE EXIT</div>
+          <div class="bullets">
+            <div class="bullet"><span class="bull-arrow">›</span><span class="bull-text">Mali, Burkina Faso and Niger formally consolidated their departure from the ECOWAS bloc</span></div>
+            <div class="bullet"><span class="bull-arrow">›</span><span class="bull-text">Nigeria's diplomatic mediator role faces fresh scrutiny from regional and international observers</span></div>
+            <div class="bullet"><span class="bull-arrow">›</span><span class="bull-text">West African trade corridors under pressure as political realignment deepens across the Sahel</span></div>
+          </div>
+          <div class="story-footer">
+            <span class="story-meta">Developing · 3 Sources</span>
+            <span class="story-logo">PAPERLY<span>.</span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 5: CTA -->
+      <div class="slide s-cta">
+        <div class="watermark">P</div>
+        <span class="cta-label">Daily Intelligence · paperly.online</span>
+        <div class="cta-body">
+          <div class="cta-headline">READ THE<br>FULL BRIEF.<br>EVERY DAY.</div>
+          <p class="cta-sub">Subscribe free. Nigeria & West Africa's sharpest news intelligence — in your inbox daily.</p>
+        </div>
+        <div class="cta-footer">
+          <button class="cta-btn">Subscribe Now →</button>
+          <div class="cta-logo">PAPERLY.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <button class="nav-btn" onclick="next()">→</button>
+</div>
+
+<div class="controls">
+  <div class="dots" id="dots">
+    <div class="dot active" onclick="goTo(0)"></div>
+    <div class="dot" onclick="goTo(1)"></div>
+    <div class="dot" onclick="goTo(2)"></div>
+    <div class="dot" onclick="goTo(3)"></div>
+    <div class="dot" onclick="goTo(4)"></div>
+  </div>
+  <span class="counter" id="counter">01 / 05</span>
+</div>
+
+<script>
+  const SZ = 560;
+  let c=0, n=5;
+  const track=document.getElementById('track');
+  function go(){
+    track.style.transform=`translateX(-${c*SZ}px)`;
+    document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===c));
+    document.getElementById('counter').textContent=String(c+1).padStart(2,'0')+' / '+String(n).padStart(2,'0');
+  }
+  function next(){c=(c+1)%n;go();}
+  function prev(){c=(c-1+n)%n;go();}
+  function goTo(i){c=i;go();}
+  const d=new Date();
+  document.getElementById('cdate').textContent=d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}).toUpperCase();
+</script>
+</body>
+</html>

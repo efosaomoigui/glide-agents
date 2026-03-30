@@ -1,0 +1,39 @@
+// Generate content via GLIDE
+app.post('/api/generate', async (req, res) => {
+  const { platforms, count = 7, theme } = req.body;
+
+  const prompt = `Generate ${count} social media posts for Paperly.
+Platforms: ${(platforms || ['tiktok', 'facebook', 'instagram', 'twitter']).join(', ')}
+${theme ? `Theme/focus: ${theme}` : ''}
+
+For each post, return a JSON block with this structure:
+\`\`\`json
+{
+  "action": "create_posts",
+  "posts": [
+    {
+      "platform": "tiktok",
+      "hook": "The hook text for slide 1",
+      "body": "Body content / slide text",
+      "cta": "Try Paperly free → link",
+      "image_prompts": ["Description for image 1", "Description for image 2"],
+      "caption": "Full caption with hashtags for the post",
+      "hashtags": ["#AI", "#BusinessIntelligence"],
+      "scheduled_for": null
+    }
+  ]
+}
+\`\`\`
+
+Make them high quality, platform-native, and conversion-focused.
+
+CRITICAL: You must return valid JSON. If you use double quotes inside a string (e.g. for dialogue or emphasis), they MUST be escaped with a backslash like this: \" or use single quotes like this: '. Ensure the final output is a single valid JSON block without truncation.`;
+
+  try {
+    const response = await chatWithGlide(prompt);
+    res.json({ response, message: 'Content generation complete. Check drafts.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+

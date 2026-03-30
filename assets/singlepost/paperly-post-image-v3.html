@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paperly – Post V3 · Image Edition</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+
+  :root {
+    --green: #00FF88;
+    --green-glow: rgba(0,255,136,0.14);
+    --green-dim: rgba(0,255,136,0.2);
+    --border: #1C1C1C;
+    --text: #FFFFFF;
+    --sz: 560px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background:#040404;
+    min-height:100vh;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    padding:48px 20px; gap:16px;
+    font-family:'IBM Plex Sans',sans-serif;
+  }
+  .vtag {
+    font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:3px;
+    color:var(--green); text-transform:uppercase;
+    border:1px solid var(--green-dim); padding:5px 14px;
+  }
+
+  .post {
+    width:var(--sz); height:var(--sz);
+    position:relative; overflow:hidden;
+    display:flex; flex-direction:column;
+    background:#000; border:1px solid var(--border);
+  }
+
+  .post-img {
+    position:absolute; inset:0;
+    width:100%; height:100%;
+    object-fit:cover; object-position:center 20%;
+    opacity:0.52;
+    filter:saturate(0.55) brightness(0.88);
+  }
+
+  .overlay {
+    position:absolute; inset:0;
+    background: linear-gradient(
+      110deg,
+      rgba(13,13,13,0.99) 0%,
+      rgba(13,13,13,0.96) 30%,
+      rgba(13,13,13,0.72) 50%,
+      rgba(13,13,13,0.22) 68%,
+      transparent 100%
+    );
+    z-index:1;
+  }
+  .overlay-btm {
+    position:absolute; bottom:0; left:0; right:0; height:210px;
+    background:linear-gradient(to top, rgba(8,8,8,1) 0%, rgba(8,8,8,0.58) 52%, transparent 100%);
+    z-index:1;
+  }
+
+  /* Scanlines */
+  .scanlines {
+    position:absolute; inset:0;
+    background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.08) 3px,rgba(0,0,0,0.08) 4px);
+    z-index:2; pointer-events:none;
+  }
+  /* Green left strip */
+  .accent-line {
+    position:absolute; left:0; top:0; bottom:0; width:2px;
+    background:linear-gradient(to bottom, var(--green) 0%, rgba(0,255,136,0.04) 100%);
+    box-shadow:0 0 12px rgba(0,255,136,0.28);
+    z-index:3;
+  }
+  /* Corner brackets */
+  .br { position:absolute; bottom:38px; right:40px; width:30px; height:30px; border-bottom:2px solid rgba(0,255,136,0.2); border-right:2px solid rgba(0,255,136,0.2); z-index:4; }
+  .tl { position:absolute; top:38px; left:40px; width:20px; height:20px; border-top:2px solid rgba(0,255,136,0.14); border-left:2px solid rgba(0,255,136,0.14); z-index:4; }
+
+  .content {
+    position:relative; z-index:5;
+    display:flex; flex-direction:column;
+    height:100%;
+    padding:38px 36px 38px 46px;
+    width:63%;
+  }
+
+  .toprow {
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:20px;
+  }
+  .top-logo { font-family:'Bebas Neue',sans-serif; font-size:18px; color:rgba(255,255,255,0.12); letter-spacing:3px; }
+  .top-logo span { color:rgba(0,255,136,0.22); }
+  .status {
+    display:flex; align-items:center; gap:6px;
+    font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:2px;
+    color:rgba(0,255,136,0.45); text-transform:uppercase;
+  }
+  .pip { width:5px; height:5px; border-radius:50%; background:var(--green); box-shadow:0 0 6px var(--green); animation:blink 1.6s ease-in-out infinite; }
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.1}}
+
+  .slashrule {
+    display:flex; align-items:center; gap:10px; margin-bottom:18px;
+  }
+  .sl { flex:1; height:1px; background:linear-gradient(90deg,var(--green) 0%,transparent 80%); opacity:0.2; }
+  .sm { font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:2px; color:rgba(0,255,136,0.28); text-transform:uppercase; white-space:nowrap; }
+
+  .sector { display:flex; align-items:center; gap:7px; margin-bottom:16px; }
+  .sector-tag { font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:3px; color:var(--green); text-transform:uppercase; }
+
+  .headline {
+    font-family:'Bebas Neue',sans-serif; font-size:54px;
+    color:var(--text); line-height:0.92; letter-spacing:1.5px;
+    margin-bottom:20px; flex-shrink:0;
+    text-shadow:0 2px 24px rgba(0,0,0,0.9);
+  }
+
+  .summary {
+    flex:1;
+    border-left:2px solid rgba(0,255,136,0.3);
+    padding-left:15px;
+    display:flex; align-items:flex-start;
+  }
+  .summary p {
+    font-size:13.5px; color:rgba(255,255,255,0.5);
+    line-height:1.68; text-shadow:0 1px 8px rgba(0,0,0,0.95);
+  }
+
+  .footer {
+    padding-top:24px;
+    border-top:1px solid rgba(255,255,255,0.07);
+    display:flex; flex-direction:column; gap:11px;
+  }
+  .footer-top { display:flex; justify-content:space-between; align-items:flex-end; }
+  .footer-logo { font-family:'Bebas Neue',sans-serif; font-size:28px; color:var(--text); letter-spacing:3px; line-height:1; }
+  .footer-logo span { color:var(--green); text-shadow:0 0 10px rgba(0,255,136,0.5); }
+  .footer-right { display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
+  .footer-label { font-family:'IBM Plex Mono',monospace; font-size:8.5px; letter-spacing:2px; color:rgba(0,255,136,0.45); text-transform:uppercase; }
+  .footer-src { font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:1px; color:rgba(255,255,255,0.18); text-transform:uppercase; }
+  .footer-url {
+    font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:2px;
+    color:rgba(255,255,255,0.22);
+    text-decoration:underline; text-underline-offset:3px;
+    text-decoration-color:rgba(0,255,136,0.25);
+  }
+</style>
+</head>
+<body>
+<div class="vtag">Version 3 · Neon Brutalist · Image</div>
+<div class="post">
+  <img class="post-img" src="https://images.unsplash.com/photo-1575936123452-b67c3203c357?w=900&q=85" alt="news">
+  <div class="overlay"></div>
+  <div class="overlay-btm"></div>
+  <div class="scanlines"></div>
+  <div class="accent-line"></div>
+  <div class="br"></div>
+  <div class="tl"></div>
+  <div class="content">
+    <div class="toprow">
+      <div class="top-logo">PAPERLY<span>.</span></div>
+      <div class="status"><div class="pip"></div><span id="tdate"></span></div>
+    </div>
+    <div class="slashrule">
+      <div class="sl"></div>
+      <span class="sm">// Intelligence Report</span>
+      <div class="sl" style="flex:0.2"></div>
+    </div>
+    <div class="sector">
+      <div class="pip"></div>
+      <span class="sector-tag">Security</span>
+    </div>
+    <div class="headline">CUSTOMS<br>OFFICERS SHOOT<br>DRIVER DEAD</div>
+    <div class="summary">
+      <p>NCS operatives allegedly killed a driver on Osogbo/Iwo Road, sparking public outrage and calls for accountability across Osun State.</p>
+    </div>
+    <div class="footer">
+      <div class="footer-top">
+        <div class="footer-logo">PAPERLY<span>.</span></div>
+        <div class="footer-right">
+          <span class="footer-label">Daily Intelligence</span>
+          <span class="footer-src">The Nation · Punch</span>
+        </div>
+      </div>
+      <div class="footer-url">paperly.online</div>
+    </div>
+  </div>
+</div>
+<script>
+  const d=new Date();
+  document.getElementById('tdate').textContent=d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}).toUpperCase();
+</script>
+</body>
+</html>

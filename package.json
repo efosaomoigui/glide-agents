@@ -1,0 +1,32 @@
+{
+  "name": "glide-agent",
+  "version": "1.0.0",
+  "description": "GLIDE — Social Media Marketing Agent for PAPERLY",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "nodemon server/index.js",
+    "dashboard": "cd dashboard && npm run dev",
+    "setup": "node scripts/setup.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@aws-sdk/client-s3": "^3.1013.0",
+    "@aws-sdk/lib-storage": "^3.1013.0",
+    "@google/generative-ai": "^0.24.1",
+    "axios": "^1.7.0",
+    "cors": "^2.8.5",
+    "db-migrate": "^0.11.14",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "node-cron": "^3.0.3",
+    "puppeteer-core": "^24.40.0",
+    "sqlite-sync": "^0.3.9",
+    "sqlite3": "^6.0.1",
+    "twilio": "^5.2.0",
+    "twitter-api-v2": "^1.17.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}

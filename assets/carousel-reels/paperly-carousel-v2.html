@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paperly – V2 White Magazine</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Space+Mono:wght@400;700&family=Figtree:wght@300;400;500;600&display=swap');
+
+  :root {
+    --ink: #111111;
+    --paper: #FAFAF7;
+    --cream: #EDE8DF;
+    --red: #D63327;
+    --red-dim: rgba(214,51,39,0.1);
+    --border: #DDD8CE;
+    --muted: rgba(17,17,17,0.38);
+    --sz: 560px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background:var(--cream);
+    min-height:100vh;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    padding:48px 20px; gap:20px;
+    font-family:'Figtree',sans-serif;
+  }
+  .vtag {
+    font-family:'Space Mono',monospace; font-size:10px; letter-spacing:3px;
+    color:var(--ink); text-transform:uppercase;
+    border:1px solid var(--border); padding:5px 14px; border-radius:100px;
+  }
+  .shell { display:flex; align-items:center; gap:14px; }
+  .viewport {
+    width:var(--sz); height:var(--sz); overflow:hidden; position:relative;
+    box-shadow:0 8px 48px rgba(0,0,0,0.12);
+  }
+  .track { display:flex; height:100%; transition:transform 0.55s cubic-bezier(0.77,0,0.18,1); }
+
+  /* ── Base Slide ── */
+  .slide {
+    min-width:var(--sz); height:var(--sz);
+    background:var(--paper);
+    border:1px solid var(--border);
+    position:relative; overflow:hidden;
+    display:flex; flex-direction:column;
+    padding:34px 38px;
+  }
+
+  /* ── Story image layers ── */
+  .slide-img {
+    position:absolute; inset:0;
+    width:100%; height:100%;
+    object-fit:cover; object-position:center 20%;
+    z-index:1;
+  }
+  /* Cream wash left, image right */
+  .slide-overlay {
+    position:absolute; inset:0;
+    background: linear-gradient(
+      110deg,
+      rgba(250,250,247,0.99) 0%,
+      rgba(250,250,247,0.97) 26%,
+      rgba(250,250,247,0.82) 44%,
+      rgba(250,250,247,0.34) 62%,
+      rgba(250,250,247,0.04) 100%
+    );
+    z-index:2;
+  }
+  .slide-overlay-btm {
+    position:absolute; bottom:0; left:0; right:0; height:200px;
+    background:linear-gradient(to top, rgba(250,250,247,1) 0%, rgba(250,250,247,0.6) 55%, transparent 100%);
+    z-index:3;
+  }
+  /* Red left accent line on story slides */
+  .slide-accent {
+    position:absolute; left:0; top:0; bottom:0; width:3px;
+    background:var(--red); z-index:4;
+  }
+
+  /* Story content in left 61% */
+  .story-inner {
+    position:relative; z-index:6;
+    display:flex; flex-direction:column;
+    height:100%; width:61%;
+  }
+
+  /* ── COVER ── */
+  .s-cover { justify-content:space-between; }
+  .s-cover .red-corner {
+    position:absolute; top:0; right:0;
+    width:110px; height:110px;
+    background:var(--red);
+    clip-path:polygon(100% 0,0 0,100% 100%);
+    z-index:2;
+  }
+  .s-cover .red-corner-label {
+    position:absolute; top:16px; right:10px;
+    font-family:'Space Mono',monospace; font-size:7px; letter-spacing:2px;
+    color:rgba(255,255,255,0.75); font-weight:700; text-transform:uppercase;
+    writing-mode:vertical-rl; transform:rotate(180deg); z-index:3;
+  }
+  .cover-top { display:flex; justify-content:space-between; align-items:center; position:relative; z-index:2; }
+  .cover-date { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; }
+  .cover-issue { font-family:'Space Mono',monospace; font-size:8px; letter-spacing:2px; color:var(--red); text-transform:uppercase; }
+  .cover-rule { height:2px; background:var(--ink); margin:14px 0; position:relative; z-index:2; }
+  .cover-body { flex:1; display:flex; flex-direction:column; justify-content:center; gap:12px; position:relative; z-index:2; }
+  .cover-kicker { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:3px; color:var(--red); text-transform:uppercase; }
+  .cover-title { font-family:'Cormorant Garamond',serif; font-size:66px; font-weight:700; color:var(--ink); line-height:0.91; letter-spacing:-1.5px; }
+  .cover-title em { font-style:italic; color:var(--red); }
+  .cover-sub { font-size:13px; color:var(--muted); line-height:1.58; max-width:310px; }
+  .cover-footer {
+    display:flex; justify-content:space-between; align-items:center;
+    border-top:2px solid var(--ink); padding-top:16px; position:relative; z-index:2;
+  }
+  .logo { font-family:'Cormorant Garamond',serif; font-size:22px; font-weight:700; color:var(--ink); }
+  .cover-url { font-family:'Space Mono',monospace; font-size:9px; color:var(--muted); letter-spacing:1px; opacity:0.6; }
+
+  /* ── STORY HEAD ── */
+  .story-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:0; }
+  .sector-tag {
+    font-family:'Space Mono',monospace; font-size:9px; letter-spacing:2px;
+    color:var(--red); text-transform:uppercase;
+    display:flex; align-items:center; gap:6px;
+  }
+  .live-pip { width:5px; height:5px; border-radius:50%; background:var(--red); animation:blink 1.8s ease-in-out infinite; }
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.18}}
+  .slide-num { font-family:'Space Mono',monospace; font-size:9px; color:var(--muted); letter-spacing:1px; }
+  .thick-rule { height:3px; background:var(--ink); margin:12px 0 14px; }
+  .headline {
+    font-family:'Cormorant Garamond',serif; font-weight:700; font-size:30px;
+    color:var(--ink); line-height:1.12; letter-spacing:-0.3px; margin-bottom:18px;
+  }
+  .bullets { display:flex; flex-direction:column; gap:11px; flex:1; justify-content:center; }
+  .bullet { display:flex; gap:10px; align-items:flex-start; }
+  .bull-dash { font-family:'Space Mono',monospace; font-size:11px; color:var(--red); margin-top:1px; flex-shrink:0; line-height:1.55; font-weight:700; }
+  .bull-text { font-size:13px; color:rgba(17,17,17,0.65); line-height:1.6; }
+  .story-footer {
+    display:flex; justify-content:space-between; align-items:center;
+    border-top:1px solid var(--border); padding-top:14px; margin-top:auto;
+  }
+  .story-meta { font-family:'Space Mono',monospace; font-size:9px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; }
+  .story-logo { font-family:'Cormorant Garamond',serif; font-size:15px; font-weight:700; color:rgba(17,17,17,0.14); }
+
+  /* ── CTA ── */
+  .s-cta { background:var(--ink); border-color:var(--ink); justify-content:space-between; }
+  .s-cta .strip { position:absolute; top:0; left:0; right:0; height:4px; background:var(--red); z-index:2; }
+  .s-cta .bg-mark {
+    position:absolute;
+    font-family:'Cormorant Garamond',serif; font-size:240px; font-weight:700; font-style:italic;
+    color:rgba(255,255,255,0.025); bottom:-50px; right:-14px; line-height:1;
+    pointer-events:none; z-index:1;
+  }
+  .cta-label { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:3px; color:rgba(255,255,255,0.22); text-transform:uppercase; position:relative; z-index:2; }
+  .cta-body { flex:1; display:flex; flex-direction:column; justify-content:center; gap:12px; position:relative; z-index:2; }
+  .cta-headline { font-family:'Cormorant Garamond',serif; font-size:50px; font-weight:700; color:#fff; line-height:1.03; letter-spacing:-0.8px; }
+  .cta-headline em { font-style:italic; color:var(--red); }
+  .cta-sub { font-size:13px; color:rgba(255,255,255,0.36); line-height:1.58; max-width:310px; }
+  .cta-footer { display:flex; justify-content:space-between; align-items:center; position:relative; z-index:2; }
+  .cta-btn {
+    background:var(--red); color:#fff;
+    font-family:'Space Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase;
+    padding:12px 22px; border:none; cursor:pointer;
+  }
+  .cta-logo { font-family:'Cormorant Garamond',serif; font-size:20px; font-weight:700; color:rgba(255,255,255,0.18); }
+
+  /* ── Controls ── */
+  .nav-btn {
+    width:40px; height:40px; border-radius:50%;
+    background:#fff; border:1px solid var(--border); color:var(--ink);
+    font-size:20px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0; transition:all 0.2s;
+    box-shadow:0 2px 10px rgba(0,0,0,0.08);
+  }
+  .nav-btn:hover { background:var(--ink); color:#fff; border-color:var(--ink); }
+  .controls { display:flex; align-items:center; gap:14px; }
+  .dots { display:flex; gap:6px; }
+  .dot { width:5px; height:5px; border-radius:50%; background:var(--border); cursor:pointer; transition:all 0.25s; }
+  .dot.active { background:var(--ink); width:18px; border-radius:3px; }
+  .counter { font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:2px; opacity:0.5; }
+</style>
+</head>
+<body>
+<div class="vtag">Version 2 · White Magazine</div>
+
+<div class="shell">
+  <button class="nav-btn" onclick="prev()">‹</button>
+  <div class="viewport">
+    <div class="track" id="track">
+
+      <!-- SLIDE 1: COVER -->
+      <div class="slide s-cover">
+        <div class="red-corner"></div>
+        <div class="red-corner-label">Live</div>
+        <div class="cover-top">
+          <span class="cover-date" id="cdate"></span>
+          <span class="cover-issue">Daily Brief</span>
+        </div>
+        <div class="cover-rule"></div>
+        <div class="cover-body">
+          <span class="cover-kicker">Nigeria &amp; West Africa Intelligence</span>
+          <div class="cover-title">Today's<br>Intel<br><em>Brief.</em></div>
+          <p class="cover-sub">The stories shaping the region — synthesized, ranked, and ready in 60 seconds.</p>
+        </div>
+        <div class="cover-footer">
+          <div class="logo">PAPERLY.</div>
+          <span class="cover-url">paperly.online</span>
+        </div>
+      </div>
+
+      <!-- SLIDE 2 -->
+      <div class="slide s-story">
+        <img class="slide-img" src="https://images.unsplash.com/photo-1575936123452-b67c3203c357?w=900&q=85" alt="news">
+        <div class="slide-overlay"></div>
+        <div class="slide-overlay-btm"></div>
+        <div class="slide-accent"></div>
+        <div class="story-inner">
+          <div class="story-head">
+            <span class="sector-tag"><span class="live-pip"></span>Security</span>
+            <span class="slide-num">01 of 03</span>
+          </div>
+          <div class="thick-rule"></div>
+          <div class="headline">Customs Officers Shoot Driver Dead in Osun State</div>
+          <div class="bullets">
+            <div class="bullet"><span class="bull-dash">—</span><span class="bull-text">NCS operatives allegedly shot a driver on Osogbo/Iwo Road in Onibueja community, Osun State</span></div>
+            <div class="bullet"><span class="bull-dash">—</span><span class="bull-text">The incident triggered immediate public outrage; residents blocked the road in protest</span></div>
+            <div class="bullet"><span class="bull-dash">—</span><span class="bull-text">Community leaders demand a full investigation and accountability from NCS command</span></div>
+          </div>
+          <div class="story-footer">
+            <span class="story-meta">2 Sources · Updated 1 day ago</span>
+            <span class="story-logo">PAPERLY.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 3 -->
+      <div class="slide s-story">
+        <img class="slide-img" src="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=900&q=85" alt="news">
+        <div class="slide-overlay"></div>
+        <div class="slide-overlay-btm"></div>
+        <div class="slide-accent"></div>
+        <div class="story-inner">
+          <div class="story-head">
+            <span class="sector-tag"><span class="live-pip"></span>Economy</span>
+            <span class="slide-num">02 of 03</span>
+          </div>
+          <div class="thick-rule"></div>
+          <div class="headline">CBN Holds Rate as Naira Posts Gains and Reserves Grow</div>
+          <div class="bullets">
+            <div class="bullet"><span class="bull-dash">—</span><span class="bull-text">Central Bank holds benchmark rate steady at its latest Monetary Policy Committee meeting</span></div>
+            <div class="bullet"><span class="bull-dash">—</span><span class="bull-text">Naira recorded gains this week, lifting overall economic sentiment by +18%</span></div>
+            <div class="bullet"><span class="bull-dash">—</span><span class="bull-text">Foreign reserve growth signals an improved external balance sheet heading into Q2 2026</span></div>
+          </div>
+          <div class="story-footer">
+            <span class="story-meta">3 Sources · This Week</span>
+            <span class="story-logo">PAPERLY.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 4 -->
+      <div class="slide s-story">
+        <img class="slide-img" src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=900&q=85" alt="news">
+        <div class="slide-overlay"></div>
+        <div class="slide-overlay-btm"></div>
+        <div class="slide-accent"></div>
+        <div class="story-inner">
+          <div class="story-head">
+            <span class="sector-tag"><span class="live-pip"></span>Regional</span>
+            <span class="slide-num">03 of 03</span>
+          </div>
+          <div class="thick-rule"></div>
+          <div class="headline">ECOWAS Stability at Risk as Sahel States Formalize Exit</div>
+          <div class="bullets">
+            <div class="bullet"><span class="bull-dash">—</span><span class="bull-text">Mali, Burkina Faso and Niger formally consolidated their departure from the ECOWAS bloc</span></div>
+            <div class="bullet"><span class="bull-dash">—</span><span class="bull-text">Nigeria's diplomatic mediator role faces fresh scrutiny from regional and international observers</span></div>
+            <div class="bullet"><span class="bull-dash">—</span><span class="bull-text">West African trade corridors under pressure as political realignment deepens across the Sahel</span></div>
+          </div>
+          <div class="story-footer">
+            <span class="story-meta">Developing · 3 Sources</span>
+            <span class="story-logo">PAPERLY.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 5: CTA -->
+      <div class="slide s-cta">
+        <div class="strip"></div>
+        <div class="bg-mark">P</div>
+        <span class="cta-label">Daily Intelligence · paperly.online</span>
+        <div class="cta-body">
+          <div class="cta-headline">Read the full brief.<br><em>Every single day.</em></div>
+          <p class="cta-sub">Subscribe free and get Nigeria & West Africa's sharpest news intelligence — in your inbox.</p>
+        </div>
+        <div class="cta-footer">
+          <button class="cta-btn">Subscribe Free</button>
+          <div class="cta-logo">PAPERLY.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <button class="nav-btn" onclick="next()">›</button>
+</div>
+
+<div class="controls">
+  <div class="dots" id="dots">
+    <div class="dot active" onclick="goTo(0)"></div>
+    <div class="dot" onclick="goTo(1)"></div>
+    <div class="dot" onclick="goTo(2)"></div>
+    <div class="dot" onclick="goTo(3)"></div>
+    <div class="dot" onclick="goTo(4)"></div>
+  </div>
+  <span class="counter" id="counter">01 / 05</span>
+</div>
+
+<script>
+  const SZ = 560;
+  let c=0, n=5;
+  const track=document.getElementById('track');
+  function go(){
+    track.style.transform=`translateX(-${c*SZ}px)`;
+    document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===c));
+    document.getElementById('counter').textContent=String(c+1).padStart(2,'0')+' / '+String(n).padStart(2,'0');
+  }
+  function next(){c=(c+1)%n;go();}
+  function prev(){c=(c-1+n)%n;go();}
+  function goTo(i){c=i;go();}
+  const d=new Date();
+  document.getElementById('cdate').textContent=d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+</script>
+</body>
+</html>
