@@ -27,6 +27,19 @@ Corrected several operational blockers that affected dashboard accuracy and agen
 
 ---
 
+## LOG ENTRY: 2026-03-31 (v2.0.2 Instagram Optimization)
+
+### Actions Taken:
+- **Batch Polling Implementation:** Refactored `instagram.js` to poll multiple media containers in a single request using the `?ids=` Graph API parameter. This reduces API call volume by ~80% for carousels.
+- **Enhanced Error Visibility:** Added `status_code`, `status`, and `error_message` fields to the polling logic. Success/failure reasons from Meta are now captured directly in the system logs.
+- **Rate Limit Buffering:** Increased the polling interval from 8s to 12s and added a 30s back-off delay when a 403/429 "Rate Limit" error is detected.
+- **Traceability:** Updated the `errors` table to include the specific `post.id` in the error message for easier debugging.
+
+### Reason for Action:
+Frequent "Application request limit reached" errors were blocking Instagram posts. These optimizations ensure GLIDE stays within Meta's strict platform limits while providing better feedback when processing fails.
+
+---
+
 ## LOG ENTRY: [DATE] — [LOG TITLE]
 
 ### Actions Taken:

@@ -1,33 +1,71 @@
 // social/instagram.js
 const axios = require('axios');
 
-async function waitForMediaReady(containerId, accessToken, maxRetries = 24) {
+async function waitForMediaReady(containerIds, accessToken, maxRetries = 20) {
+  const ids = Array.isArray(containerIds) ? containerIds : [containerIds];
+  const pendingIds = new Set(ids);
+  
+  console.log(`📡 Monitoring ${pendingIds.size} Instagram media container(s)...`);
+
   for (let i = 0; i < maxRetries; i++) {
     try {
+      const idList = Array.from(pendingIds).join(',');
       const response = await axios.get(
-        `https://graph.facebook.com/v19.0/${containerId}`,
-        { params: { fields: 'status_code', access_token: accessToken } }
+        `https://graph.facebook.com/v19.0/`,
+        { 
+          params: { 
+            ids: idList,
+            fields: 'status_code,status,error_message', 
+            access_token: accessToken 
+          } 
+        }
       );
       
-      const status = response.data.status_code;
-      console.log(`Instagram media container ${containerId} status: ${status} (Attempt ${i + 1}/${maxRetries})`);
-      
-      if (status === 'FINISHED') return true;
-      if (status === 'ERROR') throw new Error('Instagram media processing failed');
-      if (status === 'EXPIRED') throw new Error('Instagram media container expired');
-      
-      // Wait 5 seconds before next poll
-      await new Promise(r => setTimeout(r, 5000));
-    } catch (err) {
-      console.error(`Error polling Instagram media status: ${err.message}`);
-      if (err.response?.data?.error?.message) {
-        console.error('API Error Details:', err.response.data.error.message);
+      const results = response.data;
+      for (const id of Object.keys(results)) {
+        const item = results[id];
+        const status = item.status_code;
+        
+        if (status === 'FINISHED') {
+          console.log(`✅ Container ${id} is FINISHED.`);
+          pendingIds.delete(id);
+        } else if (status === 'ERROR') {
+          console.error(`❌ Container ${id} failed: ${item.error_message || item.status || 'Unknown error'}`);
+          throw new Error(`Instagram media processing failed for ${id}: ${item.error_message || 'Unknown error'}`);
+        } else if (status === 'EXPIRED') {
+          throw new Error(`Instagram media container ${id} expired`);
+        } else {
+          console.log(`⏳ Container ${id} status: ${status} (Attempt ${i + 1}/${maxRetries})`);
+        }
       }
-      // If it's a transient error, continue polling
-      await new Promise(r => setTimeout(r, 5000));
+
+      if (pendingIds.size === 0) return true;
+      
+      // Wait 12 seconds before next poll to be extra safe with rate limits
+      await new Promise(r => setTimeout(r, 12000));
+    } catch (err) {
+      console.error(`Error polling Instagram media: ${err.message}`);
+      if (err.response?.data?.error) {
+        const fbError = err.response.data.error;
+        console.error(`API Error [${fbError.code}]: ${fbError.message}`);
+        // If it's a rate limit error (code 17 or 4), wait longer
+        if (fbError.code === 17 || fbError.code === 4) {
+          console.warn('⚠️ Rate limit hit. Waiting 30s before retry...');
+          await new Promise(r => setTimeout(r, 30000));
+        }
+      }
+      
+      // If the error was a processing failure we already threw, re-throw it
+      if (err.message.includes('processing failed')) throw err;
+      
+      await new Promise(r => setTimeout(r, 8000));
     }
   }
-  throw new Error('Instagram media processing timed out after 2 minutes');
+  
+  if (pendingIds.size > 0) {
+    throw new Error(`Timed out waiting for ${pendingIds.size} container(s): ${Array.from(pendingIds).join(', ')}`);
+  }
+  return true;
 }
 
 async function postToInstagram(post) {
@@ -113,14 +151,13 @@ async function postInstagramCarousel(post, imageUrls) {
     childIds.push(r.data.id);
   }
 
-  // Wait for all children to be ready
-  for (const id of childIds) {
-    await waitForMediaReady(id, FACEBOOK_ACCESS_TOKEN);
-  }
+  // Wait for all children to be ready (using batch polling)
+  await waitForMediaReady(childIds, FACEBOOK_ACCESS_TOKEN);
 
   const carousel = await axios.post(
     `https://graph.facebook.com/v19.0/${INSTAGRAM_ACCOUNT_ID}/media`,
-    { media_type: 'CAROUSEL', children: childIds.join(','), caption, access_token: FACEBOOK_ACCESS_TOKEN }
+    // Fix: Instagram Graph API requires 'children' as a JSON array of strings
+    { media_type: 'CAROUSEL', children: childIds, caption, access_token: FACEBOOK_ACCESS_TOKEN }
   );
 
   await waitForMediaReady(carousel.data.id, FACEBOOK_ACCESS_TOKEN);

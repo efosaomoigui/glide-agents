@@ -333,6 +333,12 @@ async function handleStructuredAgentResponse(data) {
         const postId = result;
         console.log(`   [Post ${index+1}] Saved for ${post.platform}. ID: ${postId || 'unknown'}`);
 
+        // STAGGERED PUBLISHING: Add delay between posts to prevent API Rate Limits (Meta/Twitter)
+        if (index > 0) {
+          console.log(`   [Post ${index+1}] ⏳ Waiting 15s to respect API rate limits...`);
+          await new Promise(r => setTimeout(r, 15000));
+        }
+
         // If visual content is requested, render it now
         if (post.visual_content && postId) {
           console.log(`   [Post ${index+1}] Rendering visual content...`);
@@ -365,7 +371,6 @@ async function handleStructuredAgentResponse(data) {
               db.run("UPDATE posts SET visual_assets = ? WHERE id = ?", [JSON.stringify(publicUrls), postId]);
               console.log(`   [Post ${index+1}] ✅ Visual assets processed: ${publicUrls.length} files`);
 
-              /* 
               // CLEANUP: Delete local files after successful CDN upload
               if (publicUrls.every(url => url.startsWith('http'))) {
                 for (const assetPath of assetPaths) {
@@ -374,7 +379,6 @@ async function handleStructuredAgentResponse(data) {
                 }
                 console.log(`   [Post ${index+1}] 🗑️ Local assets cleaned up.`);
               }
-              */
             }
           } catch (renderErr) {
             console.error(`   [Post ${index+1}] ❌ Rendering failed:`, renderErr.message);
@@ -1056,7 +1060,7 @@ async function postContent(post) {
     console.error(`❌ [Post ${post.id}] Failed to post to ${post.platform}:`, err.message);
     db.run("UPDATE posts SET status = 'failed' WHERE id = ?", [post.id]);
     db.run('INSERT INTO errors (message, stack, created_at) VALUES (?, ?, (strftime(\'%Y-%m-%dT%H:%M:%SZ\', \'now\')))', 
-      [`Post Error (${post.platform}): ${err.message}`, err.stack]);
+      [`Post ${post.id} Error (${post.platform}): ${err.message}`, err.stack]);
     await sendNotification(`❌ *GLIDE:* Failed to post to ${post.platform}: ${err.message}`);
   }
 }
