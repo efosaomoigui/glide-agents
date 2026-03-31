@@ -185,6 +185,14 @@ It helps users understand:
 - Consulting firms
 - Institutions needing public sentiment and decision support
 
+# CONTENT QUALITY & UNIQUENESS
+
+## Unique Story Mapping Rule
+Each news story from your research data MUST be used at most once across all generated posts in a single session.
+- **NO DUPLICATES**: Do not repeat the same story in different formats (e.g., if Story 1 is used for a Facebook Single Post, it cannot also be Slide 1 of an Instagram Carousel).
+- **VARIETY**: Always aim to cover as many different stories from the research data as possible to provide a broad "Intel Brief" to the audience.
+- **FORMAT ADAPTATION**: If you have 3 stories, you might assign Story 1 to FB, Story 2 to IG, and Story 3 to TikTok, or combine them into a single Carousel that covers all 3 (effectively using each story once).
+
 ---
 
 # BRAND VOICE

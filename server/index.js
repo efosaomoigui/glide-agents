@@ -181,6 +181,30 @@ async function chatWithGlide(userMessage, includeContext = true) {
     const memory = loadMemory();
     if (memory) systemPrompt += `\n\n## YOUR MEMORY\n${memory}`;
 
+    // Add recent system errors (self-debugging)
+    const recentErrors = db.run('SELECT message, created_at FROM errors ORDER BY created_at DESC LIMIT 5');
+    if (recentErrors.length > 0) {
+      systemPrompt += `\n\n## RECENT SYSTEM ERRORS\n${JSON.stringify(recentErrors, null, 2)}`;
+    }
+
+    // Add project structure context
+    const structure = `
+    /server
+      - index.js (Core)
+      - research.js (Web scraping)
+      - analytics/ (Metrics)
+      - render/ (Image generation)
+      - social/ (Platform APIs)
+    /dashboard
+      - index.html (UI)
+    /data
+      - paperly.db (SQLite)
+      - output/ (Generated images)
+    /memory
+      - (Memory & Brand Voice files)
+    `;
+    systemPrompt += `\n\n## PROJECT STRUCTURE\n${structure}`;
+    
     // Add recent analytics context
     const recentAnalytics = db.run(`
       SELECT p.platform, p.hook, a.views, a.likes, a.clicks
@@ -341,6 +365,7 @@ async function handleStructuredAgentResponse(data) {
               db.run("UPDATE posts SET visual_assets = ? WHERE id = ?", [JSON.stringify(publicUrls), postId]);
               console.log(`   [Post ${index+1}] ✅ Visual assets processed: ${publicUrls.length} files`);
 
+              /* 
               // CLEANUP: Delete local files after successful CDN upload
               if (publicUrls.every(url => url.startsWith('http'))) {
                 for (const assetPath of assetPaths) {
@@ -349,6 +374,7 @@ async function handleStructuredAgentResponse(data) {
                 }
                 console.log(`   [Post ${index+1}] 🗑️ Local assets cleaned up.`);
               }
+              */
             }
           } catch (renderErr) {
             console.error(`   [Post ${index+1}] ❌ Rendering failed:`, renderErr.message);
@@ -830,25 +856,22 @@ app.post('/api/logs/clear', (req, res) => {
   res.json({ success: true });
 });
 
-// Generate content via GLIDE
-app.post('/api/generate', async (req, res) => {
-  const { platforms, count = 6, theme } = req.body;
-  
-  try {
-    console.log('🔍 Refreshing intelligence from Paperly.online...');
-    await runResearch();
-  } catch (err) {
-    console.error('⚠️ Research fetch failed:', err.message);
-  }
-
-  const prompt = `Generate a high-quality mix of social media posts for Paperly.
+// ── Content Prompt Engineering ──────────────────────────────────────────────
+function getGoldenPrompt(sessionName) {
+  return `Generate a high-quality mix of social media posts for Paperly for the ${sessionName}.
 Target: 3 for Facebook, 3 for Instagram.
 
 RULES:
 - Facebook/Instagram: NEVER text-only. MUST include a visual asset.
 - Template Types: "single_post" or "carousel".
+- ANTI-HALLUCINATION: ALWAYS use 'single_post' or 'carousel'. Do NOT use 'singleimage' or other variations.
 - Visual Format: Always "square".
 - RANDOMLY pick version "1", "2", or "3" for every post — vary it!
+
+UNIQUE STORY MAPPING RULE (CORE):
+- Each story from your research data MUST be used at most once across all generated posts.
+- DO NOT repeat story content in different formats (e.g., if Story 1 is used for a Facebook Single Post, it CANNOT also be Slide 1 of an Instagram Carousel).
+- Aim to cover as many unique stories as possible to provide a broad "Intel Brief".
 
 IMAGE SELECTION RULE (CRITICAL):
 You MUST always include an image_url for every post and every carousel slide.
@@ -856,7 +879,7 @@ Choose the image source based on the story content:
 
 1. SPECIFIC PERSON / PLACE / AUTHORITY (e.g. Tinubu, El-Rufai, Pope Leo, Aso Rock, Dangote, CBN headquarters):
    → Find a real photo URL from a public news source, Wikipedia, or reliable news image.
-   → Example: https://upload.wikimedia.org/wikipedia/commons/thumb/.../Bola_Tinubu.jpg
+   → Example: https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Bola_Tinubu.jpg
    → Use actual web image URLs — NOT Unsplash for these.
 
 2. ABSTRACT / THEMATIC TOPIC (e.g. economy, security, inflation, energy, elections in general):
@@ -904,9 +927,7 @@ Return ONLY the following JSON (no conversational text before or after):
         "format": "square",
         "data": {
           "slides": [
-            {
-              "type": "cover"
-            },
+            { "type": "cover" },
             {
               "type": "story",
               "headline": "Exact headline from paperly.online hero story 1",
@@ -940,9 +961,7 @@ Return ONLY the following JSON (no conversational text before or after):
               ],
               "image_url": "https://images.unsplash.com/photo-RELEVANT-TO-STORY-3?w=900&q=85"
             },
-            {
-              "type": "cta"
-            }
+            { "type": "cta" }
           ]
         }
       }
@@ -957,6 +976,30 @@ CAROUSEL RULES:
 - Use exactly 3 story slides to match the 3 template story slots.
 
 CRITICAL: Output exactly 6 posts (3 FB, 3 IG). Use REAL story-relevant image URLs. Ensure valid JSON. Output ONLY JSON.`;
+}
+
+// Temporary test endpoint for Phase 4 verification
+app.get('/api/test-session', async (req, res) => {
+  try {
+    await runSession('SharpStyleSim');
+    res.json({ success: true, message: 'Sharp session simulation complete. Check logs and posts.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Generate content via GLIDE
+app.post('/api/generate', async (req, res) => {
+  const { platforms, count = 6, theme } = req.body;
+  
+  try {
+    console.log('🔍 Refreshing intelligence from Paperly.online...');
+    await runResearch();
+  } catch (err) {
+    console.error('⚠️ Research fetch failed:', err.message);
+  }
+
+  const prompt = getGoldenPrompt('Manual Dashboard');
   try {
     const response = await chatWithGlide(prompt);
     res.json({ response, message: 'Content generation complete. Check drafts.' });
@@ -991,7 +1034,7 @@ async function postContent(post) {
     console.log(`✅ [Post ${post.id}] API success. Platform ID: ${platformPostId}`);
 
     // Refactored to single line string to avoid multi-line query issues with sqlite-sync
-    const query = "UPDATE posts SET status = 'posted', platform_post_id = ?, posted_at = CURRENT_TIMESTAMP WHERE id = ?";
+    const query = "UPDATE posts SET status = 'posted', platform_post_id = ?, posted_at = (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')) WHERE id = ?";
     const updateResult = db.run(query, [platformPostId, post.id]);
 
     console.log(`📝 [Post ${post.id}] Database status updated to 'posted'. Result:`, updateResult);
@@ -1012,7 +1055,7 @@ async function postContent(post) {
   } catch (err) {
     console.error(`❌ [Post ${post.id}] Failed to post to ${post.platform}:`, err.message);
     db.run("UPDATE posts SET status = 'failed' WHERE id = ?", [post.id]);
-    db.run('INSERT INTO errors (message, stack, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)', 
+    db.run('INSERT INTO errors (message, stack, created_at) VALUES (?, ?, (strftime(\'%Y-%m-%dT%H:%M:%SZ\', \'now\')))', 
       [`Post Error (${post.platform}): ${err.message}`, err.stack]);
     await sendNotification(`❌ *GLIDE:* Failed to post to ${post.platform}: ${err.message}`);
   }
@@ -1054,11 +1097,17 @@ async function runSession(sessionName) {
 
   console.log(`🕗 Running ${sessionName} session...`);
   
-  
+  // 1. Refresh Research
+  try {
+    console.log(`🔍 [${sessionName}] Refreshing news research...`);
+    await runResearch();
+  } catch (err) {
+    console.error(`⚠️ [${sessionName}] Research failed, using existing memory:`, err.message);
+  }
+
   // 2. Generate Content
-  await chatWithGlide(
-    `It's the ${sessionName} session. Based on the latest research from Paperly.online, generate the 3x3 mix for Facebook and Instagram (3 image/text posts + 3 carousels for each). Send me a brief progress summary.`
-  );
+  const prompt = getGoldenPrompt(sessionName);
+  await chatWithGlide(prompt);
 }
 
 // MORNING: Every day at 8am

@@ -1434,7 +1434,7 @@ async function loadLogs() {
   }
   list.innerHTML = logs.map(l => `
     <tr>
-      <td class="log-time">${new Date(l.created_at).toLocaleString()}</td>
+      <td class="log-time">${parseDate(l.created_at).toLocaleString()}</td>
       <td class="log-msg">${escHtml(l.message)}</td>
     </tr>
   `).join('');
@@ -1580,12 +1580,16 @@ function escHtml(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+function parseDate(iso) {
+  if (!iso) return new Date();
+  const dateStr = iso.includes(' ') && !iso.includes('Z') ? iso.replace(' ', 'T') + 'Z' : (iso.endsWith('Z') ? iso : iso + 'Z');
+  const d = new Date(dateStr);
+  return isNaN(d.getTime()) ? new Date() : d;
+}
+
 function timeAgo(iso) {
   if (!iso) return '';
-  // Ensure ISO format compatibility 
-  const dateStr = iso.includes(' ') ? iso.replace(' ', 'T') + 'Z' : iso;
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return 'just now';
+  const d = parseDate(iso);
   const diff = Date.now() - d.getTime();
   const mins = Math.floor(diff/60000);
   if (mins < 1) return 'just now';

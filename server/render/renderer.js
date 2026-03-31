@@ -96,7 +96,7 @@ class VisualRenderer {
     const page = await browser.newPage();
 
     // Large viewport so template has room to render at full size
-    await page.setViewport({ width: 1200, height: 1400, deviceScaleFactor: 2 });
+    await page.setViewport({ width: 1200, height: 1400, deviceScaleFactor: 1.821 });
 
     // Load template — network idle ensures Google Fonts @import is resolved
     await page.goto(`file://${templatePath}`, { waitUntil: 'networkidle2', timeout: 15000 }).catch(() => {
@@ -167,7 +167,7 @@ class VisualRenderer {
     const page = await browser.newPage();
 
     // Large viewport — let the template control the actual slide size via CSS
-    await page.setViewport({ width: 1200, height: 1400, deviceScaleFactor: 2 });
+    await page.setViewport({ width: 1200, height: 1400, deviceScaleFactor: 1.821 });
 
     await page.goto(`file://${templatePath}`, { waitUntil: 'networkidle2', timeout: 15000 }).catch(() => {});
 

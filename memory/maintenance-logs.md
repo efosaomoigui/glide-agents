@@ -15,6 +15,16 @@
 ### Reason for Action:
 Existing memory files were describing PAPERLY as a business consulting tool, which led to incorrect content generation. This reset ensures GLIDE operates with the correct product context.
 
+## LOG ENTRY: 2026-03-31 (v2.0.1 Optimizations)
+
+### Actions Taken:
+- **Timestamp Correction:** Standardized all database entries and dashboard rendering to ISO 8601 UTC (with `Z`). This resolved the 1-hour timezone drift for users in WAT (+01:00).
+- **Agent Self-Debugging:** Updated `chatWithGlide` to inject recent system errors and a file structure summary into the agent's context. GLIDE can now troubleshoot its own failures (e.g., JSON parse errors).
+- **Duplicate Prevention:** Enforced the "Unique Story Mapping Rule" in the `/api/generate` prompt to ensure news stories are never reused in different formats within the same session.
+
+### Reason for Action:
+Corrected several operational blockers that affected dashboard accuracy and agent reliability. These optimizations ensure content variety and better system maintainability.
+
 ---
 
 ## LOG ENTRY: [DATE] — [LOG TITLE]
