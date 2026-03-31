@@ -1,55 +1,56 @@
 # GLIDE Performance History — PAPERLY
-## Last Updated: [auto-updated by GLIDE]
+## Last Updated: [v2.0.0 — Reset for News Sense-Making]
 
 ---
 
-## WHAT IS WORKING
+## WHAT IS WORKING (ESTIMATED INITIAL BENCHMARKS)
 
-### Hook Formulas (Best to Worst)
-1. **Curiosity + AI Reveal** — "I showed [person] what AI sees in [their thing]" → avg HIGH
-2. **Before vs After** — "The difference between [bad] and [good]" → avg MID-HIGH
-3. **Numbers + Results** — "AI found a [₦X] problem in our data in [X] seconds" → avg MID
+### Hook Formulas (News-Led)
+1.  **"What nobody is telling you about [Story X]"** → High Curiosity
+2.  **"50 articles condensed into this 60-second brief: [Story Y]"** → High Efficiency
+3.  **"Everyone is talking about X. Here is the actual Nigeria angle."** → High Context
+4.  **"Multi-Perspective: Three sides to [Story Z] in one slide."** → High Intelligence
 
 ### Platform Notes
-- **TikTok:** Slideshows outperform face videos. Text in middle of slide. Post via draft not API.
-- **Instagram:** Carousels (6-8 slides) outperform single images. Strong first slide critical.
-- **Facebook:** Longer captions perform better. Data/insight posts resonate. Share to groups.
-- **X/Twitter:** Threads (5-8 tweets) outperform single tweets. Start with bold claim.
-
-### Best Posting Times (WAT — West Africa Time)
-- TikTok: 7pm–9pm weekdays, 11am–1pm weekends
-- Instagram: 6pm–8pm weekdays
-- Facebook: 9am–11am and 7pm–9pm
-- Twitter: 8am–10am and 7pm–9pm
+- **Facebook (PRIMARY):** High performance for informative, group-friendly storytelling.
+- **Instagram:** Carousels (STRICT 5-SLIDE RULE) with premium editorial visuals.
+- **TikTok:** Fast-paced, high-curiosity slideshows.
+- **X (Twitter):** Single-post bold claims or thread-based context.
 
 ---
 
-## WHAT IS NOT WORKING
+## BEST POSTING TIMES (WAT — WEST AFRICA TIME)
 
-- AI-generated faces → looks fake, users scroll past
-- Generic stock imagery → no engagement
-- Vague CTAs like "learn more" or "check us out" → no clicks
-- Posting the same hook 3+ times in a row → algorithm deprioritises
-- Long captions on TikTok → users don't read
+- **Morning Brief (8am–10am):** The start of the work day news cycle.
+- **Lunch Break (1pm–2pm):** Quick catch-up during the day.
+- **Evening Wind-down (7pm–9pm):** Deep-dive or daily summary review.
+
+---
+
+## WHAT IS NOT WORKING (PRE-V2 RESET)
+
+- **Old Business Data Hooks:** Do not use hooks about "SME revenue" or "spreadsheets."
+- **AI-Generated Faces:** Users scroll past fake-looking people.
+- **Generic Placeholders:** Never use low-quality or unrelated visuals.
+- **Corporate Fluff:** Avoid "Leverage" or "Synergy" and other generic marketing filler.
 
 ---
 
 ## KEY LEARNINGS
 
-- Always name the app (PAPERLY) explicitly in the last slide CTA
-- "Mistakes" in images (boomers pointing out things) boost comment engagement → algorithmic boost
-- Business/finance angle works well for Nigerian audience — use ₦ not $ where possible
-- Relatable scenarios (showing a colleague, showing a boss, family member reacting) perform best
-- Data visualization aesthetics outperform generic lifestyle imagery for this product
+- **Bold Headlines:** Use curiosity-driven truth to earn the scroll.
+- **Regional Rooting:** Always connect national news to personal impact (money, policy, society).
+- **Template Variety:** Switching between `v1` (Dark), `v2` (White), and `v3` (Modern) keeps the feed fresh.
+- **Direct CTAs:** Drive traffic to `paperly.online` for the full story.
 
 ---
 
-## AUDIENCE INSIGHTS
+## AUDIENCE GROWTH METRICS (PHASE 1 GOALS)
 
-- Primary: Nigerian SME owners, startup founders, operations managers (28–45)
-- Pain: Overwhelmed by spreadsheets, making decisions without data, no in-house analyst
-- Language: Mix formal and casual — not too corporate, not too bro
-- Aspiration: Be the smart business owner in the room who knows their numbers
+- **Reach:** Goal of 100–200 real followers in April.
+- **Engagement Rank:** Saves > Shares > Comments > Likes.
+- **Click-Through Rank:** Goal of increasing traffic directly to `paperly.online`.
 
 ---
-*GLIDE auto-updates this file after every weekly analysis*
+
+*GLIDE auto-updates this file after every weekly analysis cycle.*

@@ -1,21 +1,80 @@
-## Content Hosting & Posting Strategy
-- **Official Provider**: Cloudflare R2
-- **Hybrid Flow**:
-  - **Facebook (Single Post)**: Prefers binary upload from the local `data/output` directory for maximum performance and reach.
-  - **Instagram & TikTok**: Uses Cloudflare R2 public URLs as it's the only reliable method for these platforms.
-  - **Facebook (Carousel)**: Falls back to R2 URLs for multi-image stability.
-- **Workflow**: 
-  1. GLIDE generates content.
-  2. Server renders HTML templates to local PNG/MP4.
-  3. Server uploads to Cloudflare R2.
-  4. Platform modules pick the best asset type (Local Binary or R2 URL) based on the target platform.
+# GLIDE Technical Capabilities — PAPERLY
+## Architecture and Operations Guide (v2.0.0)
 
-## Social Media Integration
-- **TikTok**: Uses `PULL_FROM_URL` with R2 assets.
-- **Instagram**: Uses `image_url` or `video_url` pointing to R2 assets.
-- **Facebook**: Uses both binary uploads and public R2 URLs for carousels.
-- **X (Twitter)**: Standard media upload flow.
+---
 
-## Developer Note
-- Always ensure `visual_assets` contains valid public URLs when preparing posts for TikTok and Instagram.
-- If a post fails, check R2 connectivity via `tests/test_r2_upload.js`.
+## CORE ARCHITECTURE (SQLite)
+
+GLIDE operates on a persistent SQLite database located at:
+`./data/paperly.db`
+
+### Primary Tables & Schema
+
+#### 1. `posts`
+- `id` (int)
+- `platform` (string): facebook, instagram, tiktok, twitter
+- `hook` (text)
+- `body` (text)
+- `cta` (text)
+- `image_prompts` (json)
+- `visual_assets` (json)
+- `caption` (text)
+- `hashtags` (json)
+- `status` (string): draft, queued, posted, failed
+- `scheduled_for` (datetime)
+- `created_at` (datetime)
+
+#### 2. `analytics`
+- `post_id` (int)
+- `platform` (string)
+- `views`, `likes`, `comments`, `shares`, `clicks` (int)
+- `recorded_at` (datetime)
+
+#### 3. `hooks`
+- `text` (text): The hook content
+- `platform` (string)
+- `avg_views` (int)
+- `usage_count` (int)
+- `last_used` (datetime)
+
+---
+
+## CONTENT ASSET FLOW
+
+1.  **GLIDE Generates Content:** Based on `paperly.online` research data.
+2.  **HTML/CSS Rendering:** The server renders templates with GLIDE data into PNG (Single Post) or Slides (Carousel).
+3.  **Cloudflare R2 Upload:** All rendered assets are uploaded to Cloudflare R2 for public access.
+4.  **Platform Integration:**
+    - **Facebook (Single Post):** Prefers binary upload from local `data/output`.
+    - **Instagram, TikTok, FB Carousel:** Uses R2 Public URLs for stability.
+    - **X (Twitter):** Standard media upload flow.
+
+---
+
+## AUTHORIZED SYSTEM ACTIONS
+
+GLIDE has authority to execute the following actions:
+
+- **`create_posts`** → Prepare and queue new content.
+- **`clear_posts`** → Wipe all drafts or scheduled posts for a reset.
+- **`clear_analytics`** → Reset performance tracking data.
+- **`inspect_db`** → Review post history, analytics quality, and repetitive hooks.
+- **`cleanup_duplicates`** → Identify and remove redundant content entries.
+
+---
+
+## MAINTENANCE & HEALTH AUTHORITY
+
+As a Growth Operator, GLIDE is authorized to:
+- Review and recommend database cleanup actions.
+- Identify and improve underperforming prompt logic.
+- Log system modifications and content improvements in `memory/maintenance-logs.md`.
+- Escalate platform API failures or posting errors to the owner.
+
+---
+
+## DEVELOPER NOTES
+
+- Ensure `visual_assets` contains valid public URLs before TikTok/Instagram posting.
+- Check R2 connectivity if uploads fail: `tests/test_r2_upload.js`.
+- Always validate content uniqueness before final queueing.

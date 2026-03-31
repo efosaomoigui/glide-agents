@@ -518,7 +518,7 @@ select.form-input option { background: #0f172a; }
 
     <div class="topbar-center">
       <span style="font-size:10px;color:var(--muted)">API:</span>
-      <input type="text" id="serverUrl" value="http://localhost:4001" placeholder="http://localhost:4001">
+      <input type="text" id="serverUrl" value="http://localhost:3001" placeholder="http://localhost:3001">
       <button class="top-btn" onclick="connectToServer()">Connect</button>
       <div class="api-status offline" id="apiStatus">
         <div class="pulse"></div>
@@ -768,10 +768,10 @@ select.form-input option { background: #0f172a; }
           <div class="card">
             <div class="card-title">Quick Prompts</div>
             <div style="display:flex;flex-direction:column;gap:6px" id="quickPrompts">
-              <button class="btn btn-ghost" style="text-align:left;width:100%" onclick="quickGenerate('Create a Facebook image/text post based on the top story from paperly.online. Use the single_post template.')">📘 Facebook image/text (Single Post)</button>
-              <button class="btn btn-ghost" style="text-align:left;width:100%" onclick="quickGenerate('Generate an Instagram carousel for today\'s Intel Brief. Map exactly 3 story slides from paperly.online.')">📸 Instagram Carousel (Intel Brief)</button>
-              <button class="btn btn-ghost" style="text-align:left;width:100%" onclick="quickGenerate('Write a short X (Twitter) hook with key points for the biggest economy story today. End with a link back to paperly.online.')">🐦 X / Twitter (Hook + Link)</button>
-              <button class="btn btn-ghost" style="text-align:left;width:100%" onclick="quickGenerate('Create a TikTok slideshow sequence using the carousel template. Include headline, bullets, and CTA for a trending story.')">📱 TikTok Slideshow (Carousel)</button>
+              <button class="btn btn-ghost" style="text-align:left;width:100%" onclick="quickGenerate('Create a Facebook post based on the top story from paperly.online. Use the singlepost template to highlight the main headline and 3 key data points.')">📘 Facebook Insight (Single Post)</button>
+              <button class="btn btn-ghost" style="text-align:left;width:100%" onclick="quickGenerate('Generate an Instagram carousel based on today\'s PAPERLY Intel Brief. Map exactly 3 story slides from paperly.online using the carousel-reels template.')">📸 Instagram Deep-Dive (Carousel)</button>
+              <button class="btn btn-ghost" style="text-align:left;width:100%" onclick="quickGenerate('Write a high-curiosity X (Twitter) hook for the most impactful economy story from paperly.online. Include 2–4 bullet points and a clear link back to the story.')">🐦 X Signal (Hook + Link)</button>
+              <button class="btn btn-ghost" style="text-align:left;width:100%" onclick="quickGenerate('Create a TikTok visual sequence using the carousel-reels template for a trending story from paperly.online. Focus on visual clarity and a strong Paperly CTA.')">📱 TikTok Intelligence (Carousel)</button>
             </div>
           </div>
         </div>
@@ -1609,7 +1609,15 @@ function loadDemoData() { loadDemoStats(); loadRecentPosts(); loadQueue(); }
 // ── Init ──────────────────────────────────────────────────────
 window.addEventListener('load', () => {
   const savedApi = localStorage.getItem('glide_api_url');
-  if (savedApi) document.getElementById('serverUrl').value = savedApi;
+  const urlEl = document.getElementById('serverUrl');
+  
+  if (savedApi) {
+    urlEl.value = savedApi;
+  } else if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+    // Auto-detect production URL (Nginx reverse proxy handles paths)
+    urlEl.value = location.origin;
+  }
+  
   loadDemoData();
   connectToServer();
 });

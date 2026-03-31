@@ -1,65 +1,55 @@
 # GLIDE Audience Insights — PAPERLY
-## Who we are talking to on each platform
+## Who we are talking to on each platform (v2.0.0)
 
 ---
 
 ## PRIMARY AUDIENCE PROFILE
 
-**Name:** The Nigerian Business Decision-Maker
-**Age:** 28–48
-**Role:** SME owner, startup founder, operations manager, CFO of growing company
-**Location:** Lagos, Abuja, Port Harcourt — urban Nigeria, possibly diaspora
+**Name:** The Urban Nigerian Professional
+**Age:** 25–40
+**Roles:** Mid-level managers, tech founders, consultants, media professionals, bankers, policy analysts.
+**Location:** Lagos, Abuja, Port Harcourt — urban Nigeria, and the Diaspora (UK, US, Canada).
 
 ### Their Pain Points:
-- Drowning in spreadsheets that take hours to compile
-- Making million-naira decisions based on gut feeling
-- Can't afford a full-time data analyst
-- Knows data matters but doesn't know where to start
-- Has tried Excel dashboards — they break, need constant updating
+- **News Noise:** Drowning in 100+ sources, WhatsApp group rumors, and fragmented headlines.
+- **Lack of Context:** Seeing *what* happened but not understanding *why* it matters for their wallet, sector, or society.
+- **Time Constraints:** Too busy to read 10 deep-dives; needs a fast, daily 60-second summary.
+- **Biased Frames:** Tired of one-sided reporting; wants to see all sides clearly.
 
 ### Their Aspirations:
-- Be the smartest person in the room about their own business
-- Make decisions faster and with confidence
-- Impress investors, partners, and their board with real numbers
-- Save the time they waste compiling reports manually
+- **Be the Smartest in the Room:** Always know the real story before colleagues or friends.
+- **Make Better Decisions:** Use clear news intelligence for personal or business planning.
+- **Understand Nigeria:** Stay connected to the real pulse of the country through data-led summaries.
 
 ### What Triggers Them to Click:
-- Seeing a result that seems impossible for their situation (social proof)
-- Recognising their own pain ("that's exactly my problem")
-- A specific number (₦X saved, X% improvement, X hours saved)
-- Curiosity about what AI would find in THEIR data
+- **High-Curiosity Truth:** Hooks that reveal a hidden angle or a clear "why" behind a major event.
+- **Regional Framing:** Seeing their specific reality (e.g., fuel prices, exchange rate, policy changes) addressed directly.
+- **Multi-Perspective Hooks:** "Everyone is saying X, but Y is also happening."
+- **Efficiency:** "Get the summary of 50+ articles in 60 seconds."
 
 ---
 
 ## PLATFORM AUDIENCE BREAKDOWN
 
-### TikTok Audience
-- Younger side of range (25–38)
-- Discovering content organically
-- Often watching during commute or evening wind-down
-- Will share if it's surprising or funny (boomers pointing out mistakes = shares)
-- DECISION: Prioritise curiosity hooks, relatable scenarios, visual reveals
+### Facebook (PHASE 1 PRIORITY)
+- **Slightly Older (28–50):** Deeply rooted in community groups and political discussions.
+- **Behaviors:** Shares to groups, tags colleagues, reads longer captions.
+- **Messaging:** Informative, authority-led, and conversational.
 
-### Facebook Audience
-- Slightly older (35–50)
-- Part of business groups and entrepreneur communities
-- Reads captions — will actually engage with longer content
-- More likely to tag a colleague or share to a group
-- DECISION: Post in relevant Facebook Groups (Nigerian Entrepreneurs, SME groups)
+### Instagram
+- **Visual-First (25–40):** Values aesthetics and high-quality editorial design.
+- **Behaviors:** Saves carousels for later reference; responds to polls/stories.
+- **Messaging:** Premium, slide-based storytelling, and "saveable" insights.
 
-### Instagram Audience
-- Visual-first (30–42)
-- Heavily influenced by aesthetics — if it looks good, they trust it
-- Stories drive immediate action (polls, swipe-ups)
-- Carousels get saved ("save for later" = high intent signal)
-- DECISION: Invest in clean, premium-looking slide designs
+### TikTok
+- **The Modern Crowd (18–38):** Consumes news via fast-paced visual hooks.
+- **Behaviors:** Slideshows outperform face videos; high engagement with relatable curiosity.
+- **Messaging:** Hook-heavy, high energy, and visually dynamic slideshows.
 
-### X / Twitter Audience
-- Intellectually driven (28–45)
-- Tech-forward, startup ecosystem
-- Responds to bold claims backed by data
-- Will debate and discuss — good for brand building
-- DECISION: Threads work best, take strong positions
+### X (Twitter)
+- **The Intellectually Driven (25–45):** Tech-forward, high-intensity news environment.
+- **Behaviors:** RTs for threads, debates points, values bold data claims.
+- **Messaging:** Bold openers, thread-based deep-dives, and sharp intellectual positioning.
 
 ---
 
@@ -67,11 +57,11 @@
 
 | Segment | Best Content Type | Best Hook Style |
 |---------|------------------|-----------------|
-| SME Owners | Before/After, Cost savings | Numbers + results |
-| Startup Founders | AI discovery, speed | Curiosity reveal |
-| Operations Managers | Process improvement | Comparison |
-| Finance/CFO | Data accuracy, reporting time | Specific metric |
+| Busy Professionals | 60-second summary | Time-saving result |
+| Policy/Politics Nerds | Multi-perspective | "What we're not being told" |
+| Business/Finance Analysts | Regional Framing | Money/Economy impact |
+| Young Trend-Watchers | TikTok Slideshow | High-curiosity reveal |
 
 ---
 
-*GLIDE updates this file monthly based on comment analysis and engagement patterns*
+*GLIDE updates this file monthly based on news engagement patterns and audience growth metrics.*

@@ -1,63 +1,65 @@
 # GLIDE Hook Library — PAPERLY
-## Sorted by average views. Updated by GLIDE after every analytics cycle.
+## Sorted by curiosity and average views (v2.0.0 Reset)
 
 ---
 
-## TIER 1 — PROVEN WINNERS (Use Often)
+## TIER 1 — PROVEN WINNERS (HIGH-SPEED INTELLIGENCE)
 
 | Hook | Platform | Avg Views | Status |
 |------|----------|-----------|--------|
-| "I showed my [team/colleague/boss] what AI sees in our business data" | TikTok | UNTESTED | Deploy |
-| "The difference between running your business blind and using PAPERLY" | TikTok/IG | UNTESTED | Deploy |
-| "What AI found when I uploaded 6 months of our sales data" | TikTok | UNTESTED | Deploy |
-| "My [family member] asked me how I always know our numbers. I showed them PAPERLY" | TikTok | UNTESTED | Deploy |
+| "What nobody is telling you about [Story X] — in 60 seconds." | All | UNTESTED | Deploy |
+| "50 articles condensed into this briefing. Here is the actual story." | TikTok/IG | UNTESTED | Deploy |
+| "Everyone is talking about X. Here is the Nigeria angle." | FB/X | UNTESTED | Deploy |
+| "Multi-Perspective: Three sides to [Story Y] in one slide." | IG/FB | UNTESTED | Deploy |
+| "Understand [Story Z] for your pocket and your future." | All | UNTESTED | Deploy |
 
 ---
 
-## TIER 2 — TEST CANDIDATES
+## TIER 2 — TEST CANDIDATES (CURIOSITY & REVELATION)
 
 | Hook | Platform | Avg Views | Status |
 |------|----------|-----------|--------|
-| "Our accountant was charging ₦150K/month to tell us what PAPERLY shows in 4 seconds" | All | UNTESTED | Test |
-| "I used to guess which products were making us money. Not anymore." | IG/FB | UNTESTED | Test |
-| "The moment our CEO stopped using spreadsheets — PAPERLY result" | X/FB | UNTESTED | Test |
-| "What your business data actually says vs what you think it says" | All | UNTESTED | Test |
-| "Before PAPERLY: 3 hours to understand last month. After: 4 seconds." | IG | UNTESTED | Test |
-| "Nigerian businesses losing money daily because they can't read their own data" | TikTok | UNTESTED | Test |
+| "I read 6 months of policy reports so you don't have to." | FB | UNTESTED | Test |
+| "The moment our economy stopped guessing — PAPERLY result." | X/FB | UNTESTED | Test |
+| "What the news doesn't want you to know about [Story W]." | TikTok | UNTESTED | Test |
+| "Why [Story V] is the biggest story of the week for Nigerians." | All | UNTESTED | Test |
+| "One story. Three sides. Here's what's actually happening." | IG | UNTESTED | Test |
 
 ---
 
-## TIER 3 — ARCHIVE (Avoid for Now)
+## TIER 3 — ARCHIVE (AVOID OLD BUSINESS DATA HOOKS)
 
 | Hook | Reason |
 |------|--------|
+| "AI found a gap in our revenue" | Old Identity — Avoid |
+| "I showed my accountant PAPERLY" | Old Identity — Avoid |
+| "The difference between running your business blind" | Old Identity — Avoid |
 | "AI is changing everything about business data" | Too generic |
 | "The future of business intelligence is here" | Corporate, boring |
-| "Check out PAPERLY today" | Sounds like an ad |
 
 ---
 
 ## HOOK CONSTRUCTION FORMULAS
 
-**Formula 1: The Reveal**
-"I showed [person] [thing] → [surprising result]"
-Example: "I showed my co-founder what PAPERLY sees in our revenue — she didn't believe it"
+### Formula 1: The Revelation
+"What nobody is telling you about [Story X] → [Impact]"
+*Example:* "What nobody is telling you about the fuel price increase — it's not just about OPEC."
 
-**Formula 2: The Comparison**
-"The difference between [bad state] and [good state]"
-Example: "The difference between guessing your margins and actually knowing them"
+### Formula 2: The Efficiency (The 60-Second Rule)
+"[Volume of News] condensed into [Short timeframe] briefing."
+*Example:* "50 articles on the PDP convention condensed into this 60-second briefing."
 
-**Formula 3: The Discovery**
-"[Action] [timeframe] → [unexpected finding]"
-Example: "Uploaded 3 months of invoices into PAPERLY. It found ₦2.1M we were losing."
+### Formula 3: The Multi-Perspective
+"One story. Three sides. [The Core Insight]."
+*Example:* "One story. Three sides. Here is what the PDP re-election actually means for 2027."
 
-**Formula 4: The Reaction**
-"[Relatable person] reacted to [AI result]"
-Example: "My accountant's face when I showed her what PAPERLY does in 4 seconds"
+### Formula 4: The Regional Framing
+"Everyone is talking about X. Here is the Nigeria angle."
+*Example:* "Everyone is talking about the US Fed rate. Here is what it means for the Naira."
 
-**Formula 5: The Challenge**
-"You think you know [X]. AI disagrees."
-Example: "You think you know which product is most profitable. PAPERLY thinks otherwise."
+### Formula 5: The Curiosity Reveal
+"You think you know [X]. PAPERLY thinks otherwise."
+*Example:* "You think you know why Kwankwaso resigned. PAPERLY thinks otherwise."
 
 ---
 

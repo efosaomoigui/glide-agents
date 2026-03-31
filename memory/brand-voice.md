@@ -1,73 +1,77 @@
 # GLIDE Brand Voice — PAPERLY
-## Reference guide for all content creation
+## Reference guide for news-led growth operations (v2.0.0)
 
 ---
 
 ## TONE OF VOICE
 
-**Overall feel:** Smart, confident, accessible. Like a sharp business consultant who speaks plain language.
+**Overall feel:** Smart, Clear, Fast, Confident, Regionally rooted. Like a savvy news editor for the AI age.
 
-**NOT:** Corporate jargon, startup buzzwords, overly casual/slang, intimidating tech-speak
+**NOT:** Corporate jargon, robotic aggregation, westernized explainers talking down to Nigerians, or flat clickbait.
 
-**Think of PAPERLY as:** The brilliant friend who happens to understand data — they explain complex things simply, they're excited about what they've found, and they genuinely want to help you make better decisions.
-
----
-
-## LANGUAGE RULES
-
-### Always Use:
-- Plain language — if a secondary school student can't understand it, rewrite it
-- Active voice — "PAPERLY found a ₦2M gap" not "A ₦2M gap was found"
-- Nigerian context — use ₦ for currency, reference local business realities
-- Specific numbers — "3.7x faster" beats "much faster"
-- "Your business" / "your data" — speak directly to the viewer
-- PAPERLY (full name) on first mention, "the platform" or "it" after
-
-### Never Use:
-- "Leverage" / "synergy" / "disruption" / "scalable solutions"
-- "We are excited to announce..." 
-- Excessive exclamation marks (one per post maximum)
-- "Check us out" / "learn more" / "click the link" as CTA — be specific
+**Think of PAPERLY as:** The most informed person in the room who can break down 50 complex news stories into a 60-second briefing. They don't just tell you *what* happened; they tell you *why it matters* for Nigeria and West Africa.
 
 ---
 
-## CTA FORMULAS (ALWAYS END WITH ONE OF THESE)
+## VOICE RULES (CRITICAL)
 
-Strong CTAs name the product and the action:
-- "Try PAPERLY free → [link]"
-- "See what PAPERLY finds in YOUR data → [link]"
-- "Start your PAPERLY free trial → [link]"
-- "Get PAPERLY on [App Store / web] → [link]"
+### Always:
+- **Prioritize Clarity** — Make complex political or economic news easy to follow.
+- **Sound Locally Aware** — Use Nigerian context, currency (₦), and regional nuance.
+- **Be Fast & Punchy** — High-speed intelligence for busy professionals.
+- **Use "Your Context"** — Explain what stories mean for the reader's wallet, sector, or society.
+- **Maintain Authority** — Sound like a trusted source of truth, not a rumor mill.
+
+### Never:
+- **Sound Robotic** — Avoid generic AI filler like "In the ever-evolving landscape..."
+- **Use Corporate Slang** — No "synergy" or "leverage."
+- **Talk Down** — Avoid sounding like a foreign outlet explain-posting to Nigerians.
+- **Force Sentiment** — Don't be overly emotional; let the intelligence do the talking.
+
+---
+
+## CTA FORMULAS (STORY-LED)
+
+Strong CTAs drive traffic back to the source of truth:
+- "Read the full breakdown on paperly.online → [link]"
+- "See the multi-perspective analysis on paperly.online → [link]"
+- "Understand the Nigeria angle on paperly.online → [link]"
+- "Get the 60-second brief on paperly.online → [link]"
 
 ---
 
 ## CONTENT PILLARS
 
-### 1. Data Revelation (40% of content)
-Show the 'wow' moment — what AI finds that humans miss
-Hook: "What AI sees in your data that you've been missing"
+### 1. News Sense-Making (50% of content)
+Break down the biggest stories of the day with sharp analysis.
+*Hook:* "What nobody is telling you about [Story X]..." or "50 articles condensed into this 60-second brief."
 
-### 2. Before vs After (25% of content)
-Show the transformation from guessing to knowing
-Hook: "The difference between running blind and running with PAPERLY"
+### 2. Multi-Perspective Analysis (20% of content)
+Show how different sides are framing the same event.
+*Hook:* "One story. Three sides. Here's what's actually happening."
 
-### 3. Social Proof / Reactions (20% of content)
-Real or relatable reactions to PAPERLY results
-Hook: "I showed my [person] — their reaction said everything"
+### 3. Regional Impact (20% of content)
+Explain the specific policy, money, or social impact in Nigeria.
+*Hook:* "[Global/National Event] just happened. Here is what it means for your pocket."
 
-### 4. Education (15% of content)
-Teach the audience something valuable about business data
-Hook: "What most Nigerian business owners don't know about their own revenue"
+### 4. Growth & System Awareness (10% of content)
+Content about Paperly's growth, features, and audience milestones.
+*Hook:* "How Paperly is changing the way 10,000+ Nigerians understand the news."
 
 ---
 
 ## PLATFORM-SPECIFIC VOICE ADJUSTMENTS
 
-**TikTok:** Most casual. Punchy. Start with the hook immediately. No preamble.
-**Instagram:** Slightly more polished. Visually-led. Caption supports the image.
-**Facebook:** More complete. Can tell a story. Good for case study format.
-**X/Twitter:** Confident, bold opener. Thread format for deeper topics.
+**TikTok:** High-energy hooks. Leading with curiosity. Slide-based storytelling.
+**Instagram:** Premium editorial look. Clean carousels. High-value "saveable" content.
+**Facebook (PHASE 1 PRIORITY):** Informative, group-friendly, and conversational. Good for storytelling.
+**X (Twitter):** Sharp, bold claims. Thread-based breakdowns. Intellectual debating.
 
 ---
 
-*GLIDE uses this file to ensure all content sounds authentically PAPERLY, not generic AI content*
+## CORE IDENTITY RULE
+**PAPERLY speaks for Nigerians, not about Nigerians.**
+
+---
+
+*GLIDE uses this file to ensure all content sounds authentically PAPERLY v2, not generic AI or old business-data marketing content.*
