@@ -21,6 +21,8 @@ const Anthropic = require('@anthropic-ai/sdk');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const twilio = require('twilio');
 const fs = require('fs');
+const multer = require('multer');
+const crypto = require('crypto');
 
 // ── Social Media Modules ──────────────────────────────────────────────────────
 const { postToTikTok, testTikTokConnection } = require('./social/tiktok');
@@ -38,6 +40,24 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/assets', express.static(path.join(__dirname, '../assets')));
 app.use('/output', express.static(path.join(__dirname, '../data/output')));
+app.use('/local-images', express.static(path.join(__dirname, '../data/local-images')));
+
+// ── Multer Storage Configuration ──────────────────────────────────────────────
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = path.join(__dirname, '../data/local-images');
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    // Use user-provided name if available, else clean up original name
+    const customName = req.body.name ? req.body.name.replace(/[^a-z0-9]/gi, '-').toLowerCase() : null;
+    const ext = path.extname(file.originalname);
+    const finalName = customName ? `${customName}${ext}` : `${Date.now()}-${file.originalname}`;
+    cb(null, finalName);
+  }
+});
+const upload = multer({ storage });
 
 // ── Database Setup ────────────────────────────────────────────────────────────
 const dbDir = path.join(__dirname, '../data');
@@ -132,7 +152,7 @@ db.run(`
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // ── Google Gemini Client ──────────────────────────────────────────────────────
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY, { apiVersion: 'v1' });
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY, { apiVersion: 'v1beta' });
 const geminiModel = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
 
 // ── Twilio WhatsApp Client ────────────────────────────────────────────────────
@@ -164,9 +184,11 @@ function loadMemory() {
 }
 
 // ── Agent Core: Chat with GLIDE ───────────────────────────────────────────────
-async function chatWithGlide(userMessage, includeContext = true) {
-  // Save user message
-  db.run('INSERT INTO conversations (role, content) VALUES (?, ?)', ['user', userMessage]);
+async function chatWithGlide(userMessage, mode = 'chat', includeContext = true) {
+  // Save user message (skip system prompts for generation)
+  if (mode === 'chat') {
+    db.run('INSERT INTO conversations (role, content) VALUES (?, ?)', ['user', userMessage]);
+  }
 
   // Get recent conversation history (last 20 messages)
   const history = db.run(
@@ -225,84 +247,170 @@ async function chatWithGlide(userMessage, includeContext = true) {
     const response = await anthropic.messages.create({
       model: 'claude-3-5-sonnet-20240620',
       max_tokens: 4096,
-      system: systemPrompt,
+      system: mode === 'chat' ? `You are GLIDE, a sharp, data-driven intelligence agent. Respond in clean, professional Markdown. Be concise but insightful.\n\n${systemPrompt}` : systemPrompt,
       messages: history.map(h => ({ role: h.role, content: h.content }))
     });
     assistantMessage = response.content[0].text;
+    usedProvider = 'anthropic';
   } catch (err) {
-    console.warn('⚠️ Anthropic failed, falling back to Gemini:', err.message);
-    usedProvider = 'gemini';
-    
+    console.error('⚠️ Primary Provider Failed, Falling Back to Gemini:', err.message);
+    // Fallback to Gemini
     try {
-      // Fallback to Gemini
-      // Combine system prompt and history for Gemini's structure
-      
-      // Gemini requires the first message in history to be from the 'user'
-      let geminiHistory = history.map(h => ({
-        role: h.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: h.content }]
-      }));
-
-      // Find first user message
-      const firstUserIndex = geminiHistory.findIndex(m => m.role === 'user');
-      if (firstUserIndex !== -1) {
-        geminiHistory = geminiHistory.slice(firstUserIndex);
-      }
-
-      // The last message in 'history' is the current 'userMessage' (inserted at line 159)
-      // We should remove it from history because we'll send it via sendMessage
-      const messageToSend = geminiHistory.pop();
-      const finalUserMessage = messageToSend ? messageToSend.parts[0].text : userMessage;
-
-      const chat = geminiModel.startChat({
-        history: geminiHistory,
-        generationConfig: { maxOutputTokens: 4096 }
-      });
-
-      // Inject system prompt into the first message or as a separate instruction
-      const fullPrompt = `SYSTEM INSTRUCTION: ${systemPrompt}\n\nUSER: ${finalUserMessage}`;
-      const result = await chat.sendMessage(fullPrompt);
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+      const promptText = `SYSTEM:\n${mode === 'chat' ? `You are GLIDE, a sharp, professional intelligence agent. Respond in clean, professional Markdown.\n\n${systemPrompt}` : systemPrompt}\n\nUSER:\n${userMessage}`;
+      const result = await model.generateContent(promptText);
       assistantMessage = result.response.text();
-    } catch (geminiErr) {
-      console.error('❌ Both Anthropic and Gemini failed');
-      db.run('INSERT INTO errors (message, stack) VALUES (?, ?)', [geminiErr.message, geminiErr.stack]);
-      throw geminiErr;
+      usedProvider = 'gemini-flash';
+    } catch (gErr) {
+      console.error('❌ Both Providers Failed:', gErr.message);
+      throw gErr;
     }
   }
 
-  console.log(`🤖 Agent response via ${usedProvider}`);
+  if (mode === 'chat') {
+    db.run('INSERT INTO conversations (role, content) VALUES (?, ?)', ['assistant', assistantMessage]);
+  }
+  return assistantMessage; // Removed .replace(/```json|```/g, '').trim() as processAgentResponse will handle it
+}
 
-  // Save assistant response
-  db.run('INSERT INTO conversations (role, content) VALUES (?, ?)', ['assistant', assistantMessage]);
+/**
+ * Ensures a web image is saved locally for consistency and future reuse.
+ * @param {string} url - The web image URL
+ * @param {string} topic - The topic name to use for the file
+ * @returns {Promise<string>} - The local path or original URL on failure
+ */
+async function ensureLocalImage(url, topic = 'general') {
+  const dir = path.join(__dirname, '../data/local-images');
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
-  // Parse if response contains structured content (JSON blocks)
-  // Look for JSON block in markdown or just raw braces
-  let jsonString = '';
-  const markdownMatch = assistantMessage.match(/```json\n?([\s\S]*?)\n?```/);
-  if (markdownMatch) {
-    jsonString = markdownMatch[1];
-  } else {
-    // Fallback: search for first { and last }
-    const firstBrace = assistantMessage.indexOf('{');
-    const lastBrace = assistantMessage.lastIndexOf('}');
-    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-      jsonString = assistantMessage.substring(firstBrace, lastBrace + 1);
+  // STEP 1: LOCAL SEARCH (Priority #1)
+  // Scan local folder for any image whose filename contains keywords from the topic
+  try {
+    const localFiles = fs.readdirSync(dir).filter(f => /\.(jpg|jpeg|png|webp)$/i.test(f));
+    const keywords = topic.toLowerCase().split(/[^\w\d]+/).filter(k => k.length > 3);
+    
+    for (const file of localFiles) {
+      if (keywords.some(k => file.toLowerCase().includes(k))) {
+        console.log(`🎯 LOCAL MATCH FOUND: Using ${file} for topic "${topic}"`);
+        return `/local-images/${file}`;
+      }
+    }
+  } catch (err) {
+    console.warn('⚠️ Local image search failed:', err.message);
+  }
+
+  // STEP 2: STAMPING (If no local match and we have a web URL)
+  if (!url || !url.startsWith('http')) return url;
+  
+  try {
+    // Create a clean filename from the topic + hash of URL
+    const hash = crypto.createHash('md5').update(url).digest('hex').substring(0, 8);
+    const cleanTopic = topic.replace(/[^a-z0-9]/gi, '-').toLowerCase().substring(0, 30);
+    const ext = url.split('.').pop().split(/[?#]/)[0] || 'jpg';
+    const filename = `stamped-${cleanTopic}-${hash}.${ext}`;
+    const filePath = path.join(dir, filename);
+    
+    // Skip if already exists
+    if (fs.existsSync(filePath)) return `/local-images/${filename}`;
+    
+    console.log(`📡 Stamping image to local repo: ${url}`);
+    const response = await axios({
+      method: 'get',
+      url: url,
+      responseType: 'stream',
+      headers: { 'User-Agent': 'Mozilla/5.0 (GLIDE Agent)' },
+      timeout: 10000
+    });
+    
+    const writer = fs.createWriteStream(filePath);
+    response.data.pipe(writer);
+    
+    return new Promise((resolve) => {
+      writer.on('finish', () => resolve(`/local-images/${filename}`));
+      writer.on('error', () => resolve(url)); // Fallback
+    });
+  } catch (err) {
+    console.warn(`⚠️ Failed to stamp image ${url}:`, err.message);
+    return url;
+  }
+}
+
+/**
+ * Unifies agent response processing. 
+ * Parses JSON actions, handles them, and returns clean Markdown.
+ */
+async function processAgentResponse(rawResponse, mode = 'chat') {
+  let text = rawResponse;
+  let json = null;
+  let jsonStr = '';
+
+  // 1. EXTRACT JSON: Priority to triple backticks, then brace matching
+  const blocks = rawResponse.match(/```(?:json)?\s*([\s\S]*?)```/g);
+  if (blocks) {
+    for (const b of blocks) {
+      const match = b.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (match && match[1].includes('"action"')) {
+        jsonStr = match[1].trim();
+        text = text.replace(b, '').trim();
+        break;
+      }
+    }
+  } 
+
+  if (!jsonStr) {
+    const braceMatch = rawResponse.match(/\{[\s\S]*\}/);
+    if (braceMatch && braceMatch[0].includes('"action"')) {
+      jsonStr = braceMatch[0];
+      text = text.replace(jsonStr, '').trim();
     }
   }
 
-  if (jsonString) {
+  // 2. PARSE JSON with Sanitization
+  if (jsonStr) {
     try {
-      const parsed = JSON.parse(jsonString);
-      await handleStructuredAgentResponse(parsed);
+      const sanitized = jsonStr
+        .replace(/,(\s*[\]\}])/g, '$1') 
+        .replace(/(['"])?([a-z0-9A-Z_]+)(['"])?\s*:/g, '"$2":');
+      json = JSON.parse(sanitized);
     } catch (e) {
-      console.log('Could not parse JSON from agent response. Length:', jsonString.length);
-      console.log('Error:', e.message);
-      db.run('INSERT INTO errors (message, stack) VALUES (?, ?)', 
-        [`JSON Parse Error: ${e.message}`, assistantMessage.substring(0, 500)]);
+      try { json = JSON.parse(jsonStr); } catch (e2) {
+        console.error('❌ JSON Parse Error:', e2.message);
+      }
     }
   }
-
-  return assistantMessage;
+  
+  // 3. EXECUTE ACTIONS
+  let action = null;
+  let data = null;
+  
+  if (json && json.action) {
+    action = json.action;
+    data = json;
+    try {
+      await handleStructuredAgentResponse(json);
+      
+      const isBoilerplate = !text || text.length < 20 || /glide|here|summary|output|action|json/i.test(text);
+      if (json.action === 'create_posts' && isBoilerplate) {
+        const count = json.posts ? json.posts.length : 0;
+        text = `✅ **Success!** I've generated **${count} draft posts** for you. \n\nYou can review and approve them in the **Queue** tab.`;
+      }
+    } catch (err) {
+      console.error('❌ Action Handler Failed:', err.message);
+    }
+  }
+  
+  // Final UI Cleanup (strip any remaining markers)
+  text = text.replace(/```json|```/g, '').trim() || "Action processed successfully.";
+  
+  // Return structured object for web dashboard, but allow string fallback for legacy logs/bots
+  const result = {
+    text: text,
+    action: action,
+    data: data,
+    toString: () => text 
+  };
+  
+  return result;
 }
 
 // ── Visual Rendering Module ──────────────────────────────────────────────────
@@ -339,19 +447,43 @@ async function handleStructuredAgentResponse(data) {
           await new Promise(r => setTimeout(r, 15000));
         }
 
-        // If visual content is requested, render it now
-        if (post.visual_content && postId) {
-          console.log(`   [Post ${index+1}] Rendering visual content...`);
-          try {
-            let assetPaths = [];
+            // If visual content is requested, render it now
+            if (post.visual_content && postId) {
+              console.log(`   [Post ${index+1}] Rendering visual content...`);
+              try {
+                // STAMP IMAGES LOCALLY: Ensure all images are in the local repo for stability and reuse
+                if (post.visual_content.template_type === 'single_post' && post.visual_content.data.image_url) {
+                  const localUrl = await ensureLocalImage(post.visual_content.data.image_url, post.visual_content.data.headline || 'post');
+                  post.visual_content.data.image_url = localUrl;
+                } else if (post.visual_content.template_type === 'carousel' && post.visual_content.data.slides) {
+                  for (const slide of post.visual_content.data.slides) {
+                    if (slide.image_url) {
+                      const localUrl = await ensureLocalImage(slide.image_url, slide.headline || 'carousel');
+                      slide.image_url = localUrl;
+                    }
+                  }
+                }
+
+                let assetPaths = [];
             if (post.visual_content.template_type === 'single_post') {
-              // Force format to square for maximum "coolness" stability
-              const renderData = { ...post.visual_content.data, format: 'square' };
-              const filename = await renderer.renderSinglePost(renderData, post.visual_content.version || 1);
+              // Convert to absolute path for the renderer
+              const singleData = { ...post.visual_content.data, format: 'square' };
+              if (singleData.image_url && singleData.image_url.startsWith('/local-images/')) {
+                singleData.image_url = path.join(__dirname, '../data', singleData.image_url.substring(1));
+              }
+              const filename = await renderer.renderSinglePost(singleData, post.visual_content.version || 1);
               assetPaths = [`/output/${filename}`];
             } else if (post.visual_content.template_type === 'carousel') {
-              const renderData = { ...post.visual_content.data, format: post.visual_content.format || 'square' };
-              const filenames = await renderer.renderCarousel(renderData, post.visual_content.version || 1);
+              const carouselData = { ...post.visual_content.data, format: post.visual_content.format || 'square' };
+              if (carouselData.slides) {
+                carouselData.slides = carouselData.slides.map(slide => {
+                  if (slide.image_url && slide.image_url.startsWith('/local-images/')) {
+                    return { ...slide, image_url: path.join(__dirname, '../data', slide.image_url.substring(1)) };
+                  }
+                  return slide;
+                });
+              }
+              const filenames = await renderer.renderCarousel(carouselData, post.visual_content.version || 1);
               assetPaths = filenames.map(f => `/output/${f}`);
             }
 
@@ -510,11 +642,14 @@ app.post('/webhook/whatsapp', async (req, res) => {
 
   // For all other messages, route to GLIDE agent
   try {
+    // Notify "Thinking..."
     await sendWhatsApp('🤔 *PAPERLY:* On it...');
-    const response = await chatWithGlide(incomingMsg);
+    const rawResponse = await chatWithGlide(incomingMsg);
+    const result = await processAgentResponse(rawResponse);
+    const responseText = result.text;
     
     // Split long responses into chunks (WhatsApp has 1600 char limit)
-    const chunks = response.match(/.{1,1500}(\s|$)/gs) || [response];
+    const chunks = responseText.match(/.{1,1500}(\s|$)/gs) || [responseText];
     for (const chunk of chunks) {
       await sendWhatsApp(`*PAPERLY:* ${chunk.trim()}`);
     }
@@ -574,12 +709,21 @@ async function runTelegramPolling() {
       else {
         // Route to GLIDE agent
         try {
+          // Refresh research if message implies content creation or news discussion
+          const needsResearch = /create|post|generate|news|headline|story|intel/i.test(incomingMsg);
+          if (needsResearch) {
+            console.log('🔍 [Telegram] Refreshing intelligence before responding...');
+            await runResearch().catch(e => console.warn('Research refresh failed:', e.message));
+          }
+
           // Notify "Thinking..."
-    await sendNotification('🤔 *GLIDE:* Thinking...');
-          const response = await chatWithGlide(incomingMsg);
+          await sendNotification('🤔 *GLIDE:* Thinking...');
+          const rawResponse = await chatWithGlide(incomingMsg);
+          const result = await processAgentResponse(rawResponse);
+          const responseText = result.text;
           
           // Split long responses
-          const chunks = response.match(/.{1,1500}(\s|$)/gs) || [response];
+          const chunks = responseText.match(/.{1,1500}(\s|$)/gs) || [responseText];
           for (const chunk of chunks) {
             await sendNotification(`*GLIDE:* ${chunk.trim()}`);
           }
@@ -833,9 +977,18 @@ app.post('/api/chat', async (req, res) => {
   if (!message) return res.status(400).json({ error: 'Message required' });
 
   try {
-    const response = await chatWithGlide(message);
-    res.json({ response });
+    // Refresh research if message implies content creation or news discussion
+    const needsResearch = /create|post|generate|news|headline|story|intel/i.test(message);
+    if (needsResearch) {
+      console.log('🔍 [Web Chat] Refreshing intelligence before responding...');
+      await runResearch().catch(e => console.warn('Research refresh failed:', e.message));
+    }
+
+    const rawResponse = await chatWithGlide(message, 'chat');
+    const result = await processAgentResponse(rawResponse);
+    res.json({ response: result }); // Send the full object {text, action, data}
   } catch (err) {
+    console.error('[Web Chat] Error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
@@ -846,6 +999,66 @@ app.get('/api/conversations', (req, res) => {
     'SELECT * FROM conversations ORDER BY created_at DESC LIMIT 100'
   ).reverse();
   res.json(history);
+});
+
+// ── Asset Management ──────────────────────────────────────────────────────────
+
+// List all local images
+app.get('/api/local-images', (req, res) => {
+  const dir = path.join(__dirname, '../data/local-images');
+  if (!fs.existsSync(dir)) return res.json([]);
+  
+  const files = fs.readdirSync(dir)
+    .filter(f => /\.(jpg|jpeg|png|webp|gif)$/i.test(f))
+    .map(f => ({
+      name: f,
+      url: `/local-images/${f}`,
+      path: path.join(dir, f),
+      size: fs.statSync(path.join(dir, f)).size,
+      created_at: fs.statSync(path.join(dir, f)).birthtime
+    }))
+    .sort((a,b) => b.created_at - a.created_at);
+    
+  res.json(files);
+});
+
+// Upload image
+app.post('/api/upload', upload.single('image'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+  console.log(`📁 Asset Uploaded: ${req.file.filename}`);
+  res.json({ 
+    success: true, 
+    file: {
+      name: req.file.filename,
+      url: `/local-images/${req.file.filename}`
+    }
+  });
+});
+
+// Delete image
+app.delete('/api/local-images/:filename', (req, res) => {
+  const { filename } = req.params;
+  const filePath = path.join(__dirname, '../data/local-images', filename);
+  if (fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
+    res.json({ success: true });
+  } else {
+    res.status(404).json({ error: 'File not found' });
+  }
+});
+
+// Purge all images
+app.delete('/api/local-images', (req, res) => {
+  const dir = path.join(__dirname, '../data/local-images');
+  if (fs.existsSync(dir)) {
+    const files = fs.readdirSync(dir);
+    for (const file of files) {
+      if (/\.(jpg|jpeg|png|webp|gif)$/i.test(file)) {
+        fs.unlinkSync(path.join(dir, file));
+      }
+    }
+  }
+  res.json({ success: true });
 });
 
 // Get error logs
@@ -861,37 +1074,114 @@ app.post('/api/logs/clear', (req, res) => {
 });
 
 // ── Content Prompt Engineering ──────────────────────────────────────────────
-function getGoldenPrompt(sessionName) {
+function getGoldenPrompt(sessionName, mode = 'generate') {
+  const researchPath = path.join(__dirname, '../memory/research-data.md');
+  const researchData = fs.existsSync(researchPath) ? fs.readFileSync(researchPath, 'utf8') : 'No research data available.';
+
+  // Scan local images repository
+  const localImgDir = path.join(__dirname, '../data/local-images');
+  if (!fs.existsSync(localImgDir)) fs.mkdirSync(localImgDir, { recursive: true });
+  const localImages = fs.readdirSync(localImgDir).filter(f => /\.(jpg|jpeg|png|webp)$/i.test(f));
+
+  // Get recently used headlines to prevent duplicates
+  const recentHeadlines = (db.run(`
+    SELECT body, cta FROM posts 
+    WHERE created_at >= datetime('now', '-24 hours')
+  `) || []).map(p => (p.body||'').substring(0, 50) + '...' + (p.cta||'').substring(0, 50)).join('\n');
+
+  if (mode === 'chat') {
+    return `You are GLIDE, the Social Media Marketing Agent for PAPERLY. 
+You are currently in a professional intelligence chat with your owner.
+Respond in clean, insightful Markdown. 
+
+## CURRENT CONTEXT:
+${researchData}
+
+## LOCAL ASSET REPOSITORY (AVAILABLE FOR SEARCH):
+${localImages.join(', ')}
+
+## YOUR BRAND VOICE:
+Refer to GLIDEN_SKILL.md for your tone. Be sharp, efficient, and data-driven.`;
+  }
+
   return `Generate a high-quality mix of social media posts for Paperly for the ${sessionName}.
 Target: 3 for Facebook, 3 for Instagram.
 
-RULES:
-- Facebook/Instagram: NEVER text-only. MUST include a visual asset.
-- Template Types: "single_post" or "carousel".
-- ANTI-HALLUCINATION: ALWAYS use 'single_post' or 'carousel'. Do NOT use 'singleimage' or other variations.
-- Visual Format: Always "square".
-- RANDOMLY pick version "1", "2", or "3" for every post — vary it!
+## CURRENT RESEARCH DATA (MANDATORY STORIES):
+${researchData}
 
-UNIQUE STORY MAPPING RULE (CORE):
-- Each story from your research data MUST be used at most once across all generated posts.
-- DO NOT repeat story content in different formats (e.g., if Story 1 is used for a Facebook Single Post, it CANNOT also be Slide 1 of an Instagram Carousel).
-- Aim to cover as many unique stories as possible to provide a broad "Intel Brief".
+## CONTENT STRATEGY (HEADLINE-DRIVEN CLICKS)
+1. **Headline Priority**: Actual headlines and briefings from Paperly's research are the "Main Event". 
+2. **VERBATIM HEADLINE RULE (CRITICAL)**: You MUST use the exact headline string from the \`research-data.md\` (e.g., "Story 1: [Headline]") for the \`headline\` field in your visual content. Do NOT summarize or rephrase it.
+3. **STORY ALIGNMENT RULE (CRITICAL)**: Your post body and slides must strictly adhere to the intelligence points provided in the research data. Do NOT add external context or hallucinate details.
+4. **Goal**: Use the news story as the hook to drive traffic to the intelligence platform.
+5. **Sales Post Limit**: Separate "Sales/Promotional" posts (general Paperly promos) are limited to exactly **2 PER WEEK TOTAL**.
+6. **African/Nigerian Context**: Strong focus on local news and its impact on the reader.
+
+## EXCLUSION LIST (RECENTLY POSTED - DO NOT REPEAT):
+${recentHeadlines || 'No recent duplicates.'}
+
+## LOCAL IMAGE REPOSITORY (PRIORITY #1):
+Available files: ${localImages.length > 0 ? localImages.join(', ') : 'No local images yet.'}
+- If a filename matches a keyword or topic from the news (e.g., 'tinubu.jpg', 'cbn.png'), you MUST use it. 
+- Path format: /data/local-images/[filename]
+
+## PROMOTIONAL GARNISH & CTAs (USE FOR CLICKS)
+Use these primarily in the **cta** field or as a **side-note** to the news story:
+- "Our pocket and your future. 🇳🇬"
+- "One story. Three sides. Here's what's actually happening."
+- "I read 50 articles so you don't have to. ⏳"
+- "Be the smartest person in the room. Every time. 🧠"
+- "What nobody is telling you about the news you read on WhatsApp."
+- "50 articles condensed into this 60-second intel brief. Here is what matters today."
+
+## MANDATORY CAROUSEL SEQUENCE
+Every carousel MUST follow this slide order:
+1. **Slide 1: Intel Brief (Cover)** — Use a strong hook/headline.
+2. **Slide 2: Story 1** — Headline + Brief from research.
+3. **Slide 3: Story 2** — Headline + Brief from research.
+4. **Slide 4: Story 3** — Headline + Brief from research.
+5. **Slide 5: Final CTA** — "Ready for the full brief? Link in bio" or story-specific link.
+
+RULES:
+
+## MANDATORY STORY URL MAPPING (USE THESE LINKS):
+${researchData.split('\n').filter(l => l.startsWith('## Story') || l.startsWith('**URL**')).join('\n')}
+
+RULES:
+- TOPIC LINKING RULE (PRIMARY):
+  - Every post focusing on a specific story MUST use the exact URL from that story's research data in the \`cta\`.
+  - Generic links to "paperly.online" are strictly forbidden for story-specific posts.
+  - If a carousel covers multiple stories, the main CTA can be generic, BUT individual story slides should mention the specific link if possible (in bullets).
+- TOPIC LINKING RULE (CRITICAL):
+  - Every post MUST include the specific \`topicURL\` for that story from your research data.
+  - Do NOT link to the generic 'paperly.online' homepage if a \`topicURL\` exists for the story.
+  - FAILURE to include the story-specific link is a compliance violation. The \`topicURL\` is found in each story block in your research data.
+  - The \`topicURL\` MUST be placed in the \`cta\` field.
 
 IMAGE SELECTION RULE (CRITICAL):
 You MUST always include an image_url for every post and every carousel slide.
 Choose the image source based on the story content:
 
-1. SPECIFIC PERSON / PLACE / AUTHORITY (e.g. Tinubu, El-Rufai, Pope Leo, Aso Rock, Dangote, CBN headquarters):
-   → Find a real photo URL from a public news source, Wikipedia, or reliable news image.
+1. 🏺 CULTURAL ALIGNMENT (NIGERIAN/AFRICAN FIRST):
+   → Prioritize Nigerian and African faces for all abstract topics (economy, growth, etc.).
+   → Avoid generic Western stock photos for local themes.
+
+2. 🏛️ SPECIFIC PERSON / PLACE / AUTHORITY (e.g. Tinubu, El-Rufai, Pope Leo, Aso Rock, Dangote, CBN headquarters):
+   → Use real, watermark-free photo URLs from Wikimedia Commons, Pexels, or Pixabay.
+   → Ensure the image is CLEAR and has NO WATERMARKS.
    → Example: https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Bola_Tinubu.jpg
-   → Use actual web image URLs — NOT Unsplash for these.
 
-2. ABSTRACT / THEMATIC TOPIC (e.g. economy, security, inflation, energy, elections in general):
-   → Use a relevant Unsplash photo URL.
-   → Example: https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=1080&q=85
-   → Pick images that MATCH the theme: power tower for energy, court/gavel for law, etc.
+3. 📂 THEMATIC TOPIC (e.g. economy, security, energy):
+   → Search Unsplash, Pexels, or Pixabay using tags like "Nigeria", "Lagos", "African business".
+   → Use Actual Web URLs — NOT local paths [UNLESS story-specific local images are found in /data/local-images/].
 
-NEVER use a generic camera or placeholder image. Every image must match the story.
+4. 📂 LOCAL REPO (/data/local-images/):
+   → **PRIORITY #1 (MANDATORY)**: If a filename matches a keyword or topic from the news (e.g., 'peter obi', 'tinubu', 'cbn'), you MUST use it. 
+   → Format: /local-images/[filename]
+   → This is your absolute first choice for visuals. If you use a web URL when a local asset exists, it is a compliance failure.
+
+NEVER use a generic camera, placeholder, or watermarked image.
 
 Return ONLY the following JSON (no conversational text before or after):
 \`\`\`json
@@ -900,10 +1190,10 @@ Return ONLY the following JSON (no conversational text before or after):
   "posts": [
     {
       "platform": "facebook",
-      "hook": "...",
-      "body": "...",
-      "cta": "...",
-      "caption": "...",
+      "hook": "Concise story hook...",
+      "body": "Detailed summary from the specific story...",
+      "cta": "Read the full intelligence brief: [topicURL from research]",
+      "caption": "Creative social caption...",
       "hashtags": ["#..."],
       "visual_content": {
         "template_type": "single_post",
@@ -914,7 +1204,7 @@ Return ONLY the following JSON (no conversational text before or after):
           "summary": "...",
           "sector": "...",
           "sources": "Punch · The Nation",
-          "image_url": "https://images.unsplash.com/photo-SPECIFIC-TO-STORY?w=1080&q=85"
+          "image_url": "/data/local-images/RELEVANT-ASSET.webp" // MANDATORY: Use local images first!
         }
       }
     },
@@ -1003,11 +1293,13 @@ app.post('/api/generate', async (req, res) => {
     console.error('⚠️ Research fetch failed:', err.message);
   }
 
-  const prompt = getGoldenPrompt('Manual Dashboard');
+  const prompt = getGoldenPrompt('Manual Dashboard', 'generate');
   try {
-    const response = await chatWithGlide(prompt);
+    const rawResponse = await chatWithGlide(prompt, 'generate');
+    const response = await processAgentResponse(rawResponse);
     res.json({ response, message: 'Content generation complete. Check drafts.' });
   } catch (err) {
+    console.error('[Generate API] Error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
@@ -1110,18 +1402,14 @@ async function runSession(sessionName) {
   }
 
   // 2. Generate Content
-  const prompt = getGoldenPrompt(sessionName);
-  await chatWithGlide(prompt);
+  const prompt = getGoldenPrompt(sessionName, 'generate');
+  console.log(`🤖 [${sessionName}] Starting generation session...`);
+  const rawResponse = await chatWithGlide(prompt, 'generate');
+  const result = await processAgentResponse(rawResponse);
 }
 
-// MORNING: Every day at 8am
-cron.schedule('0 8 * * *', () => runSession('Morning'));
-
-// AFTERNOON: Every day at 2pm
-cron.schedule('0 14 * * *', () => runSession('Afternoon'));
-
-// EVENING: Every day at 8pm
-cron.schedule('0 20 * * *', () => runSession('Evening'));
+// AUTOMATED CYCLE: Every 5 hours (12am, 5am, 10am, 3pm, 8pm)
+cron.schedule('0 */5 * * *', () => runSession('AutoSession'));
 
 // Weekly report: Every Monday at 9am
 cron.schedule('0 9 * * 1', async () => {
@@ -1171,4 +1459,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { app, db, chatWithGlide, sendWhatsApp, postContent, handleStructuredAgentResponse };
+module.exports = { app, db, chatWithGlide, sendWhatsApp, postContent, handleStructuredAgentResponse, getGoldenPrompt, processAgentResponse, ensureLocalImage, runResearch };

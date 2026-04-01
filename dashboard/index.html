@@ -497,6 +497,22 @@ select.form-input option { background: #0f172a; }
 .empty-text { font-size: 13px; margin-bottom: 4px; }
 .empty-sub  { font-size: 11px; color: var(--dim); }
 
+/* ── Assets Gallery ───────────────────────────────────────── */
+.assets-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; margin-top: 24px; }
+.asset-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; transition: all .2s; position: relative; }
+.asset-card:hover { transform: translateY(-4px); border-color: var(--accent); box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+.asset-preview { width: 100%; aspect-ratio: 1; object-fit: cover; background: #000; border-bottom: 1px solid var(--border); }
+.asset-info { padding: 12px; }
+.asset-name { font-size: 13px; font-weight: 600; color: #fff; word-break: break-all; margin-bottom: 4px; }
+.asset-meta { font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; }
+.asset-actions { position: absolute; top: 8px; right: 8px; display: flex; gap: 4px; opacity: 1; }
+.asset-btn { width: 28px; height: 28px; border-radius: 6px; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.2); color: var(--red); cursor: pointer; display: grid; place-items: center; font-size: 14px; transition: all .2s; }
+.asset-btn:hover { background: var(--red); border-color: var(--red); color: #fff; transform: scale(1.1); }
+
+.upload-zone { border: 2px dashed var(--border); border-radius: 16px; padding: 40px; text-align: center; background: rgba(56, 189, 248, 0.02); transition: all .2s; margin-bottom: 32px; }
+.upload-zone.dragover { border-color: var(--accent); background: rgba(56, 189, 248, 0.05); }
+.upload-icon { font-size: 32px; margin-bottom: 12px; display: block; }
+
 </style>
 </head>
 <body>
@@ -518,7 +534,7 @@ select.form-input option { background: #0f172a; }
 
     <div class="topbar-center">
       <span style="font-size:10px;color:var(--muted)">API:</span>
-      <input type="text" id="serverUrl" value="http://localhost:3001" placeholder="http://localhost:3001">
+      <input type="text" id="serverUrl" value="http://localhost:4001" placeholder="http://localhost:4001">
       <button class="top-btn" onclick="connectToServer()">Connect</button>
       <div class="api-status offline" id="apiStatus">
         <div class="pulse"></div>
@@ -545,6 +561,7 @@ select.form-input option { background: #0f172a; }
       <div class="nav-item" data-page="queue" onclick="nav(this)"><span class="nav-icon">☰</span>Queue <span class="nav-badge" style="background:transparent;padding:0">(<span id="draftCount">0</span>)</span></div>
       <div class="nav-item" data-page="generate" onclick="nav(this)"><span class="nav-icon">✦</span>Generate</div>
       <div class="nav-item" data-page="hooks" onclick="nav(this)"><span class="nav-icon">⚡</span>Hooks</div>
+      <div class="nav-item" data-page="assets" onclick="nav(this)"><span class="nav-icon">🖼️</span>Assets</div>
     </div>
     <div class="nav-group">
       <div class="nav-label">Platforms</div>
@@ -799,13 +816,9 @@ select.form-input option { background: #0f172a; }
       <div class="page-header">
         <div>
           <div class="page-title">Chat with GLIDE</div>
-          <div class="page-sub">Your Intelligence Agent — also available on WhatsApp</div>
+          <div class="page-sub">Your Intelligence Agent</div>
         </div>
         <button class="btn btn-ghost btn-sm" onclick="clearChat()">Clear chat</button>
-      </div>
-      <div class="info-box green">
-        <div class="ib-icon">📱</div>
-        <div>GLIDE is also connected to your WhatsApp. Any message you send there uses the same agent and the same memory. The conversation history is shared.</div>
       </div>
       <div class="card" style="padding:0">
         <div class="chat-wrap">
@@ -918,6 +931,36 @@ What would you like to work on today? You can ask me to:
       </div>
     </div>
 
+    <!-- ASSETS -->
+    <div class="page" id="page-assets">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Local Assets</div>
+          <div class="page-sub">Primary image library for the GLIDE agent</div>
+        </div>
+        <div>
+          <button class="btn btn-ghost btn-sm" onclick="loadAssets()">↻ Refresh</button>
+          <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="purgeAssets()">⚠ Purge All</button>
+        </div>
+      </div>
+
+      <div class="upload-zone" id="uploadZone">
+        <span class="upload-icon">📁</span>
+        <h3 style="margin-bottom:8px">Upload Local Asset</h3>
+        <p style="color:var(--muted);font-size:13px;margin-bottom:20px">Drag & drop an image or click to browse. Use kebab-case names for better matching.</p>
+        
+        <div style="max-width:400px;margin:0 auto;display:flex;flex-direction:column;gap:12px">
+          <input type="text" id="assetName" placeholder="Search name (e.g. tinubu-speech)" class="input" style="background:var(--surface2);border:1px solid var(--border);color:#fff;padding:10px;border-radius:8px;outline:none">
+          <input type="file" id="assetFile" accept="image/*" style="display:none" onchange="uploadImage()">
+          <button class="btn btn-primary" onclick="document.getElementById('assetFile').click()">Select & Upload Image</button>
+        </div>
+      </div>
+
+      <div class="assets-grid" id="assetsList">
+        <!-- Assets will be loaded here -->
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -935,7 +978,7 @@ What would you like to work on today? You can ask me to:
 
 <script>
 // ── Config ───────────────────────────────────────────────────
-let API = 'http://localhost:3001';
+let API = 'http://localhost:4001';
 let serverOnline = false;
 let paused = false;
 let viewsChartInst = null;
@@ -998,6 +1041,7 @@ function nav(el, filter) {
   if (page === 'logs') loadLogs();
   if (page === 'generate') loadSidebarHooks();
   if (page === 'chat') loadChatHistory();
+  if (page === 'assets') loadAssets();
   // Ensure stats refresh on every navigation to keep counters accurate
   if (serverOnline) loadStats();
 }
@@ -1270,20 +1314,74 @@ function addHookPrompt() {
 }
 
 // ── Chat ──────────────────────────────────────────────────────
+function markdownToHtml(text) {
+  if (!text) return '';
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/\n• (.*?)/g, '<br>• $1')
+    .replace(/\n/g, '<br>');
+}
+
+function renderActionComponent(action, data) {
+  if (!action || !data) return '';
+  
+  if (action === 'create_posts' && data.posts) {
+    return `<div class="action-comp" style="margin-top:12px;display:flex;flex-direction:column;gap:8px">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Generated Posts</div>
+      <div class="posts-list">
+        ${data.posts.slice(0,3).map(p => `
+          <div class="post-row" style="background:rgba(255,255,255,0.03)">
+            <span class="plat-badge pb-${p.platform}">${p.platform}</span>
+            <div class="post-hook" style="font-size:13px">${escHtml(p.hook)}</div>
+            <button class="btn btn-ghost btn-sm" onclick="nav('queue')">View</button>
+          </div>
+        `).join('')}
+        ${data.posts.length > 3 ? `<div style="font-size:12px;color:var(--accent);text-align:center;padding:4px;cursor:pointer" onclick="nav('queue')">+ ${data.posts.length - 3} more in Queue</div>` : ''}
+      </div>
+    </div>`;
+  }
+  return '';
+}
+
 async function loadChatHistory() {
   if (!serverOnline) return;
   const data = await apiFetch('/api/conversations');
   if (!data?.length) return;
   const el = document.getElementById('chatMsgs');
   el.innerHTML = '';
-  data.slice(-30).forEach(m => appendMsg(m.role === 'user' ? 'user' : 'agent', m.content));
+  data.slice(-30).forEach(m => {
+    let content = m.content;
+    let action = null;
+    let dataObj = null;
+    
+    // Try to parse if it was stored as JSON string (some old ones might be)
+    if (content.startsWith('{')) {
+      try {
+        const parsed = JSON.parse(content);
+        content = parsed.text;
+        action = parsed.action;
+        dataObj = parsed.data;
+      } catch(e) {}
+    }
+    
+    appendMsg(m.role === 'user' ? 'user' : 'agent', content, action, dataObj);
+  });
 }
 
-function appendMsg(role, text) {
+function appendMsg(role, text, action = null, data = null) {
   const el = document.getElementById('chatMsgs');
   const div = document.createElement('div');
   div.className = 'msg msg-' + role;
-  div.innerHTML = `<div class="msg-name">${role==='user'?'You':'GLIDE'}</div><div class="msg-bubble">${escHtml(text)}</div>`;
+  
+  const bubbleHtml = role === 'agent' ? markdownToHtml(text) : escHtml(text);
+  const actionHtml = role === 'agent' ? renderActionComponent(action, data) : '';
+  
+  div.innerHTML = `
+    <div class="msg-name">${role==='user'?'You':'GLIDE'}</div>
+    <div class="msg-bubble">${bubbleHtml}${actionHtml}</div>
+  `;
+  
   el.appendChild(div);
   el.scrollTop = el.scrollHeight;
 }
@@ -1311,7 +1409,13 @@ async function sendChat() {
     const r = await apiFetch('/api/chat', {method:'POST', body:JSON.stringify({message:msg})});
     removeTyping();
     if (r?.response) { 
-      appendMsg('agent', r.response); 
+      // Handle structured response { text, action, data }
+      const res = r.response;
+      if (typeof res === 'object') {
+        appendMsg('agent', res.text, res.action, res.data);
+      } else {
+        appendMsg('agent', res);
+      }
     } else { 
       const errMsg = r?.error || 'I could not process that — check the server is running correctly.';
       appendMsg('agent', errMsg); 
@@ -1606,6 +1710,92 @@ function toast(msg, type='success') {
   el.className = 'show ' + type;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(()=>el.className='', 3000);
+}
+
+// ── Asset Management ──────────────────────────────────────────
+
+async function loadAssets() {
+  const listEl = document.getElementById('assetsList');
+  if (!listEl) return;
+  listEl.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  
+  const files = await apiFetch('/api/local-images');
+  if (!files || files.length === 0) {
+    listEl.innerHTML = '<div class="empty-state"><div class="empty-icon">📂</div><div class="empty-text">No local assets found</div><div class="empty-sub">Upload your first image above</div></div>';
+    return;
+  }
+  
+  listEl.innerHTML = files.map(f => `
+    <div class="asset-card">
+      <div class="asset-actions">
+        <button class="asset-btn" onclick="deleteAsset('${f.name}')" title="Delete">×</button>
+      </div>
+      <img src="${API}${f.url}" class="asset-preview" loading="lazy">
+      <div class="asset-info">
+        <div class="asset-name">${f.name}</div>
+        <div class="asset-meta">
+          <span>${(f.size/1024).toFixed(1)} KB</span>
+          <span>${timeAgo(f.created_at)}</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function uploadImage() {
+  const fileEl = document.getElementById('assetFile');
+  const nameEl = document.getElementById('assetName');
+  
+  if (!fileEl.files[0]) return;
+  
+  const formData = new FormData();
+  formData.append('image', fileEl.files[0]);
+  if (nameEl.value) formData.append('name', nameEl.value);
+  
+  toast('Uploading asset...', 'info');
+  
+  try {
+    const res = await fetch(`${API}/api/upload`, {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+    
+    if (data.success) {
+      toast('Asset uploaded successfully!', 'success');
+      nameEl.value = '';
+      fileEl.value = '';
+      loadAssets();
+    } else {
+      toast(data.error || 'Upload failed', 'error');
+    }
+  } catch (err) {
+    toast('Upload failed: ' + err.message, 'error');
+  }
+}
+
+async function deleteAsset(filename) {
+  if (!confirm(`Are you sure you want to delete ${filename}?`)) return;
+  
+  const res = await apiFetch(`/api/local-images/${filename}`, { method: 'DELETE' });
+  if (res && res.success) {
+    toast('Asset deleted', 'success');
+    loadAssets();
+  } else {
+    toast('Delete failed', 'error');
+  }
+}
+
+async function purgeAssets() {
+  if (!confirm('Are you sure you want to delete ALL local images? This cannot be undone.')) return;
+  
+  const res = await apiFetch('/api/local-images', { method: 'DELETE' });
+  if (res && res.success) {
+    toast('All assets purged!', 'success');
+    loadAssets();
+  } else {
+    toast('Purge failed', 'error');
+  }
 }
 
 function loadDemoData() { loadDemoStats(); loadRecentPosts(); loadQueue(); }

@@ -24,7 +24,10 @@ async function runResearch() {
     output += `**Source API**: ${url}\n\n`;
 
     topStories.forEach((story, index) => {
+      const topicURL = `https://paperly.online/?topic=${story.slug}`;
       output += `## Story ${index + 1}: ${story.title}\n`;
+      output += `**URL**: ${topicURL}\n`;
+      if (story.thumbnail) output += `**Thumbnail**: ${story.thumbnail}\n`;
       output += `${story.ai_brief || ''}\n\n`;
       
       if (story.bullets && story.bullets.length > 0) {

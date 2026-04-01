@@ -1,43 +1,45 @@
 # Web Research: paperly.online (Top 3 Stories)
-**Last Updated**: 2026-03-31T09:51:42.684Z
+**Last Updated**: 2026-04-01T12:29:06.690Z
 **Source API**: https://paperly.online/api/topics/trending?filter=today&page=1
 
-## Story 1: Amotekun Parades 35 Suspects, Rescues Kidnap Victims In Ondo.
-The Amotekun Corps in Ondo State has arrested 35 suspects for kidnapping and other crimes, rescuing victims and recovering stolen property.
+## Story 1: Abia: Group threatens strike over delay in salary structure implementation.
+**URL**: https://paperly.online/?topic=abia-group-threatens-strike-over-delay-in-salary-structure-implementation-3e6889a6
+The Joint Unions of Tertiary Institutions in Abia State have threatened to commence a strike on Wednesday, March 18th due to delays in the implementation of a new salary structure. According to the union, all avenues for dialogue with the Abia State government, led by Governor Alex Otti, have been exhausted. The impending strike action signals a potential disruption to the academic calendar and operations of tertiary institutions within the state. This is according to Premium Times Nigeria.
 
 ### Key Intelligence Points:
-- The Amotekun Corps has made significant arrests in Ondo State
-- 35 suspects have been arrested for kidnapping and other crimes
-- Victims have been rescued and stolen property recovered
+- Joint Unions of Tertiary Institutions in Abia State threatened a strike.
+- The strike is due to delays in salary structure implementation.
+- The strike was scheduled to commence on Wednesday, March 18th.
 
 ### What You Need To Know:
-The Amotekun Corps has made significant arrests in Ondo State,35 suspects have been arrested for kidnapping and other crimes,Victims have been rescued and stolen property recovered
+Joint Unions of Tertiary Institutions in Abia State threatened a strike.,The strike is due to delays in salary structure implementation.,The strike was scheduled to commence on Wednesday, March 18th.
 
 ---
 
-## Story 2: FG Targets MSMEs’ Access To $3.5trn AfCFTA Market.
-The Federal Government has launched a digital payments report aimed at facilitating access for Micro, Small, and Medium Enterprises (MSMEs) to the African Continental Free Trade Area (AfCFTA)'s $3.5 trillion market. This initiative seeks to streamline cross-border trade through seamless digital payment solutions. The report likely outlines strategies and recommendations for MSMEs to leverage digital platforms for enhanced trade within the AfCFTA framework. By adopting digital payment methods, MSMEs can overcome traditional barriers to trade and participate more effectively in the continental market. This move is expected to boost economic growth and integration across Africa.
+## Story 2: Solad Hits Carbon Market with First Renewable Energy Certificate Sale.
+**URL**: https://paperly.online/?topic=solad-hits-carbon-market-with-first-renewable-energy-certificate-sale-9786f378
+Solad Power Group, through its subsidiary Solad Integrated Power Solutions, has achieved a significant milestone in Nigeria's clean energy transition. Peter Uzoho, an investor and operator of distributed energy solutions, is leading this initiative. The company's efforts are geared towards promoting sustainable energy practices within the country. This development signals potential growth and investment in Nigeria's renewable energy sector. The move aligns with global efforts to reduce carbon emissions and promote environmentally friendly energy sources.
 
 ### Key Intelligence Points:
-- Federal Government launched a digital payments report.
-- The report aims to help MSMEs access AfCFTA’s $3.5 trillion market.
-- The initiative focuses on seamless cross-border trade.
+- Solad Power Group is an investor and operator of distributed energy solutions.
+- Solad Integrated Power Solutions is a subsidiary of Solad Power Group.
+- The company has marked a major milestone in Nigeria’s clean energy transition.
 
 ### What You Need To Know:
-Federal Government launched a digital payments report.,The report aims to help MSMEs access AfCFTA’s $3.5 trillion market.,The initiative focuses on seamless cross-border trade.
+Solad Power Group is an investor and operator of distributed energy solutions.,Solad Integrated Power Solutions is a subsidiary of Solad Power Group.,The company has marked a major milestone in Nigeria’s clean energy transition.
 
 ---
 
-## Story 3: Shettima Visits El-Rufai, Calls For Unity Amid Mother’s Passing.
-Vice President Kashim Shettima visited former Kaduna State Governor Nasir El-Rufai to offer condolences. The visit underscores the importance of national unity and cooperation, even across political divides. Shettima emphasized the need to move beyond partisan differences for the greater good of the nation. This gesture aims to foster a sense of collective responsibility and shared purpose among political leaders. The Vice President's actions signal a commitment to reconciliation and collaboration in addressing national challenges.
+## Story 3: At Soludo’s 2nd Term Inauguration, Shettima Hails Gov’S Contributions To Nation Building.
+**URL**: https://paperly.online/?topic=at-soludos-2nd-term-inauguration-shettima-hails-govs-contributions-to-nation-building-3971e032
+Vice President Kashim Shettima has praised Anambra State Governor, Prof Charles Soludo, for his contributions to nation building. Shettima stated that the people of Anambra have renewed their commitment to competence and consolidation. This endorsement highlights Soludo's efforts and achievements in the state. The Vice President's remarks underscore the importance of strong leadership in driving national development. The statement suggests a positive outlook for Anambra State under Soludo's continued governance.
 
 ### Key Intelligence Points:
-- Vice President Kashim Shettima visited Nasir El-Rufai.
-- The visit was to offer condolences.
-- Shettima urged national unity beyond political differences.
+- Vice President Kashim Shettima has hailed Anambra State Governor, Prof Charles Soludo’s contributions to nation building.
+- Shettima says Anambra people have renewed covenant with competence and consolidation.
 
 ### What You Need To Know:
-Vice President Kashim Shettima visited Nasir El-Rufai.,The visit was to offer condolences.,Shettima urged national unity beyond political differences.
+Vice President Kashim Shettima has hailed Anambra State Governor, Prof Charles Soludo’s contributions to nation building.,Shettima says Anambra people have renewed covenant with competence and consolidation.
 
 ---
 
