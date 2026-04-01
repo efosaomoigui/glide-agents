@@ -1,5 +1,5 @@
 # Web Research: paperly.online (Top 3 Stories)
-**Last Updated**: 2026-04-01T12:29:06.690Z
+**Last Updated**: 2026-04-01T13:35:17.566Z
 **Source API**: https://paperly.online/api/topics/trending?filter=today&page=1
 
 ## Story 1: Abia: Group threatens strike over delay in salary structure implementation.

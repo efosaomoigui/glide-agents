@@ -32,7 +32,8 @@ class VisualRenderer {
       '/usr/bin/google-chrome-stable',
       '/usr/bin/google-chrome',
       '/usr/bin/chromium-browser',
-      '/usr/bin/chromium'
+      '/usr/bin/chromium',
+      '/snap/bin/chromium'
     ];
     for (const p of paths) {
       if (fs.existsSync(p)) return p;
