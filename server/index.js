@@ -42,6 +42,23 @@ app.use('/assets', express.static(path.join(__dirname, '../assets')));
 app.use('/output', express.static(path.join(__dirname, '../data/output')));
 app.use('/local-images', express.static(path.join(__dirname, '../data/local-images')));
 
+// Add dashboard auth
+app.use('/api', (req, res, next) => {
+  // Allow health check to be unauthenticated so the dashboard can verify connection
+  if (req.path === '/health') return next();
+  
+  if (!process.env.DASHBOARD_PASSWORD) {
+    return next(); // If no password set, allow access
+  }
+
+  const authHeader = req.headers.authorization || '';
+  if (authHeader === `Bearer ${process.env.DASHBOARD_PASSWORD}`) {
+    return next();
+  }
+  
+  return res.status(401).json({ error: 'Unauthorized: Invalid dashboard password' });
+});
+
 // ── Multer Storage Configuration ──────────────────────────────────────────────
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -299,40 +316,19 @@ async function ensureLocalImage(url, topic = 'general') {
     console.warn('⚠️ Local image search failed:', err.message);
   }
 
-  // STEP 2: STAMPING (If no local match and we have a web URL)
-  if (!url || !url.startsWith('http')) return url;
-  
+  // STEP 2: R2 SOURCING (Priority #2) - New Instruction: Exclusive sourcing
   try {
-    // Create a clean filename from the topic + hash of URL
-    const hash = crypto.createHash('md5').update(url).digest('hex').substring(0, 8);
-    const cleanTopic = topic.replace(/[^a-z0-9]/gi, '-').toLowerCase().substring(0, 30);
-    const ext = url.split('.').pop().split(/[?#]/)[0] || 'jpg';
-    const filename = `stamped-${cleanTopic}-${hash}.${ext}`;
-    const filePath = path.join(dir, filename);
-    
-    // Skip if already exists
-    if (fs.existsSync(filePath)) return `/local-images/${filename}`;
-    
-    console.log(`📡 Stamping image to local repo: ${url}`);
-    const response = await axios({
-      method: 'get',
-      url: url,
-      responseType: 'stream',
-      headers: { 'User-Agent': 'Mozilla/5.0 (GLIDE Agent)' },
-      timeout: 10000
-    });
-    
-    const writer = fs.createWriteStream(filePath);
-    response.data.pipe(writer);
-    
-    return new Promise((resolve) => {
-      writer.on('finish', () => resolve(`/local-images/${filename}`));
-      writer.on('error', () => resolve(url)); // Fallback
-    });
+    const r2Url = await getRandomImageFromBucket(topic);
+    if (r2Url) {
+      console.log(`🎯 R2 SOURCE FOUND: Using ${r2Url} for topic "${topic}"`);
+      return r2Url;
+    }
   } catch (err) {
-    console.warn(`⚠️ Failed to stamp image ${url}:`, err.message);
-    return url;
+    console.warn('⚠️ R2 sourcing failed:', err.message);
   }
+  // STEP 3: FALLBACK (Strict R2 only, no web)
+  console.warn(`⚠️ No asset found for topic "${topic}". Returning blank.`);
+  return '';
 }
 
 /**
@@ -415,7 +411,7 @@ async function processAgentResponse(rawResponse, mode = 'chat') {
 
 // ── Visual Rendering Module ──────────────────────────────────────────────────
 const renderer = require('./render/renderer');
-const { uploadToR2 } = require('./social/r2');
+const { uploadToR2, getRandomImageFromBucket } = require('./social/r2');
 
 // ── Handle Structured Agent Responses ────────────────────────────────────────
 async function handleStructuredAgentResponse(data) {
@@ -1159,29 +1155,20 @@ RULES:
   - FAILURE to include the story-specific link is a compliance violation. The \`topicURL\` is found in each story block in your research data.
   - The \`topicURL\` MUST be placed in the \`cta\` field.
 
-IMAGE SELECTION RULE (CRITICAL):
-You MUST always include an image_url for every post and every carousel slide.
-Choose the image source based on the story content:
+IMAGE SELECTION RULE (R2 GLIDEBUCKET ONLY):
+You MUST always include a descriptive keyword or phrase in the image_url field. 
+Do NOT generate full HTTP URLs (like Unsplash, Pixabay, etc.). 
+The backend will automatically source matching high-quality assets from our internal Cloudflare R2 'glidebucket'.
 
-1. 🏺 CULTURAL ALIGNMENT (NIGERIAN/AFRICAN FIRST):
-   → Prioritize Nigerian and African faces for all abstract topics (economy, growth, etc.).
-   → Avoid generic Western stock photos for local themes.
+1. 🏺 RELEVANCY:
+   → Provide a 3-5 word topic string in the image_url field (e.g., "Bola Tinubu Portrait", "Lagos Economy", "CBN Headquarters").
+   → The system will find the best file match in our R2 bucket based on these keywords.
 
-2. 🏛️ SPECIFIC PERSON / PLACE / AUTHORITY (e.g. Tinubu, El-Rufai, Pope Leo, Aso Rock, Dangote, CBN headquarters):
-   → Use real, watermark-free photo URLs from Wikimedia Commons, Pexels, or Pixabay.
-   → Ensure the image is CLEAR and has NO WATERMARKS.
-   → Example: https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Bola_Tinubu.jpg
+2. 📂 NO WEB FALLBACK:
+   → Do NOT attempt to use external web search. Simply provide the most accurate keywords for the story.
+   → If the story is extremely abstract and unlikely to have an image, you can leave image_url as "".
 
-3. 📂 THEMATIC TOPIC (e.g. economy, security, energy):
-   → Search Unsplash, Pexels, or Pixabay using tags like "Nigeria", "Lagos", "African business".
-   → Use Actual Web URLs — NOT local paths [UNLESS story-specific local images are found in /data/local-images/].
-
-4. 📂 LOCAL REPO (/data/local-images/):
-   → **PRIORITY #1 (MANDATORY)**: If a filename matches a keyword or topic from the news (e.g., 'peter obi', 'tinubu', 'cbn'), you MUST use it. 
-   → Format: /local-images/[filename]
-   → This is your absolute first choice for visuals. If you use a web URL when a local asset exists, it is a compliance failure.
-
-NEVER use a generic camera, placeholder, or watermarked image.
+NEVER use a placeholder like "camera.jpg" or a fake URL. Always use real topic keywords.
 
 Return ONLY the following JSON (no conversational text before or after):
 \`\`\`json

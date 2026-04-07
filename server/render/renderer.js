@@ -97,7 +97,7 @@ class VisualRenderer {
     const page = await browser.newPage();
 
     // Large viewport so template has room to render at full size
-    await page.setViewport({ width: 1200, height: 1400, deviceScaleFactor: 1.821 });
+    await page.setViewport({ width: 1200, height: 1400, deviceScaleFactor: 2 });
 
     // Load template — network idle ensures Google Fonts @import is resolved
     await page.goto(`file://${templatePath}`, { waitUntil: 'networkidle2', timeout: 15000 }).catch(() => {
@@ -106,10 +106,16 @@ class VisualRenderer {
 
     // Inject dynamic content
     await page.evaluate((content) => {
+      console.log('💉 Injecting content:', { headline: content.headline, image: content.image_url });
+      
       // Inject dynamic background image
       if (content.image_url) {
         const img = document.querySelector('.post-img');
-        if (img) img.src = content.image_url;
+        if (img) {
+          img.src = content.image_url;
+          img.onerror = () => console.error('❌ Failed to load image:', content.image_url);
+          img.onload = () => console.log('✅ Image loaded successfully:', content.image_url);
+        }
       }
 
       // Inject text content
@@ -133,6 +139,12 @@ class VisualRenderer {
         if (src) src.textContent = content.sources;
       }
     }, data);
+
+    // Capture console messages from Puppeteer context to node console
+    page.on('console', msg => {
+      const text = msg.text();
+      if (text.includes('✅') || text.includes('❌')) console.log(`   [Browser] ${text}`);
+    });
 
     // Wait for image fetch + font load + paint
     await this.waitForAssetsLoaded(page);
@@ -167,8 +179,8 @@ class VisualRenderer {
     });
     const page = await browser.newPage();
 
-    // Large viewport — let the template control the actual slide size via CSS
-    await page.setViewport({ width: 1200, height: 1400, deviceScaleFactor: 1.821 });
+    // Large viewport — let the template control the actual slide size via CSS (540px × 2x DPI = 1080px output)
+    await page.setViewport({ width: 1200, height: 1400, deviceScaleFactor: 2 });
 
     await page.goto(`file://${templatePath}`, { waitUntil: 'networkidle2', timeout: 15000 }).catch(() => {});
 
