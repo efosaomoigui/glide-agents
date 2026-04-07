@@ -1,5 +1,5 @@
 # Web Research: paperly.online (Top 3 Stories)
-**Last Updated**: 2026-04-07T08:16:37.507Z
+**Last Updated**: 2026-04-07T09:00:01.017Z
 **Source API**: https://paperly.online/api/topics/trending?filter=today&page=1
 
 ## Story 1: Israel, US launch fresh wave of airstrikes across Iran – Media.
