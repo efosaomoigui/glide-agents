@@ -326,6 +326,8 @@ body::after {
 .pb-facebook { background: rgba(56, 189, 248, .15); color: var(--accent); }
 .pb-instagram{ background: rgba(244, 114, 182, .15); color: var(--pink); }
 .pb-twitter  { background: rgba(148, 163, 184, .15); color: #cbd5e1; }
+.pb-linkedin { background: rgba(0, 119, 181, .15); color: #0077b5; }
+.pb-reddit   { background: rgba(255, 69, 0, .15); color: #ff4500; }
 .post-hook { flex: 1; font-size: 14px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 500; color: #e2e8f0; }
 .post-date { font-size: 12px; color: var(--muted); white-space: nowrap; }
 .status-pill { padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; text-transform: capitalize; }
@@ -625,6 +627,8 @@ select.form-input option { background: #0f172a; }
       <div class="nav-item" data-page="queue" data-filter="facebook" onclick="nav(this,'facebook')"><span style="width:8px;height:8px;border-radius:50%;background:#1877f2;display:inline-block;flex-shrink:0"></span>Facebook</div>
       <div class="nav-item" data-page="queue" data-filter="instagram" onclick="nav(this,'instagram')"><span style="width:8px;height:8px;border-radius:50%;background:#e1306c;display:inline-block;flex-shrink:0"></span>Instagram</div>
       <div class="nav-item" data-page="queue" data-filter="twitter" onclick="nav(this,'twitter')"><span style="width:8px;height:8px;border-radius:50%;background:#777;display:inline-block;flex-shrink:0"></span>X / Twitter</div>
+      <div class="nav-item" data-page="queue" data-filter="linkedin" onclick="nav(this,'linkedin')"><span style="width:8px;height:8px;border-radius:50%;background:#0077b5;display:inline-block;flex-shrink:0"></span>LinkedIn</div>
+      <div class="nav-item" data-page="queue" data-filter="reddit" onclick="nav(this,'reddit')"><span style="width:8px;height:8px;border-radius:50%;background:#ff4500;display:inline-block;flex-shrink:0"></span>Reddit</div>
     </div>
     <div class="nav-divider"></div>
     <div class="nav-group">
@@ -642,7 +646,7 @@ select.form-input option { background: #0f172a; }
         <span class="agent-name">GLIDE v1.0</span>
       </div>
       <div class="agent-meta" id="agentMeta">Connect server to start</div>
-      <div class="agent-meta" style="margin-top:4px" id="agentPlatforms">4 platforms configured</div>
+      <div class="agent-meta" style="margin-top:4px" id="agentPlatforms">6 platforms configured</div>
     </div>
   </nav>
 
@@ -706,6 +710,8 @@ select.form-input option { background: #0f172a; }
             <div class="plat-row"><div class="plat-name" style="color:#64a0f5">Facebook</div><div class="plat-bar"><div class="plat-fill" id="bar-facebook" style="width:0%;background:#1877f2"></div></div><div class="plat-val" id="val-facebook" style="color:#64a0f5">—</div></div>
             <div class="plat-row"><div class="plat-name" style="color:#f07099">Instagram</div><div class="plat-bar"><div class="plat-fill" id="bar-instagram" style="width:0%;background:#e1306c"></div></div><div class="plat-val" id="val-instagram" style="color:#f07099">—</div></div>
             <div class="plat-row"><div class="plat-name" style="color:#999">X / Twitter</div><div class="plat-bar"><div class="plat-fill" id="bar-twitter" style="width:0%;background:#777"></div></div><div class="plat-val" id="val-twitter" style="color:#999">—</div></div>
+            <div class="plat-row"><div class="plat-name" style="color:#0077b5">LinkedIn</div><div class="plat-bar"><div class="plat-fill" id="bar-linkedin" style="width:0%;background:#0077b5"></div></div><div class="plat-val" id="val-linkedin" style="color:#0077b5">—</div></div>
+            <div class="plat-row"><div class="plat-name" style="color:#ff4500">Reddit</div><div class="plat-bar"><div class="plat-fill" id="bar-reddit" style="width:0%;background:#ff4500"></div></div><div class="plat-val" id="val-reddit" style="color:#ff4500">—</div></div>
           </div>
           <div style="position:relative;height:130px;margin-top:16px">
             <canvas id="viewsChart"></canvas>
@@ -787,6 +793,8 @@ select.form-input option { background: #0f172a; }
         <div class="plat-stat"><div class="ps-name">Facebook</div><div class="ps-views" style="color:#64a0f5" id="an-facebook">—</div><div class="ps-sub" id="an-facebook-posts">— posts</div></div>
         <div class="plat-stat"><div class="ps-name">Instagram</div><div class="ps-views" style="color:#f07099" id="an-instagram">—</div><div class="ps-sub" id="an-instagram-posts">— posts</div></div>
         <div class="plat-stat"><div class="ps-name">X / Twitter</div><div class="ps-views" style="color:#999" id="an-twitter">—</div><div class="ps-sub" id="an-twitter-posts">— posts</div></div>
+        <div class="plat-stat"><div class="ps-name">LinkedIn</div><div class="ps-views" style="color:#0077b5" id="an-linkedin">—</div><div class="ps-sub" id="an-linkedin-posts">— posts</div></div>
+        <div class="plat-stat"><div class="ps-name">Reddit</div><div class="ps-views" style="color:#ff4500" id="an-reddit">—</div><div class="ps-sub" id="an-reddit-posts">— posts</div></div>
       </div>
       <div class="card" style="margin-bottom:14px">
         <div class="card-title">Views Over Time — All Platforms</div>
@@ -815,6 +823,29 @@ select.form-input option { background: #0f172a; }
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
             <div class="form-group" style="margin:0">
+              <label class="form-label">Content Strategy</label>
+              <select class="form-input" id="genStrategy" onchange="togglePostTypes()">
+                <option value="product" selected>Paperly Product Marketing</option>
+                <option value="growth">Personal Authority Growth</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0; display: none;" id="postTypeGroup">
+              <label class="form-label">Specialized Post Type</label>
+              <select class="form-input" id="genPostType">
+                <option value="auto">Auto-select</option>
+                <option value="insight">Insight Post</option>
+                <option value="build-in-public">Build-in-Public</option>
+                <option value="contrarian">Contrarian Post</option>
+                <option value="framework">Framework / Mental Model</option>
+                <option value="experience">Experience / Lessons</option>
+                <option value="educational">Educational / Strategic</option>
+                <option value="positioning">Positioning Post</option>
+                <option value="pain-point">Audience Pain Post</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+            <div class="form-group" style="margin:0">
               <label class="form-label">Number of Posts</label>
               <select class="form-input" id="genCount">
                 <option value="3">3 posts</option>
@@ -840,6 +871,8 @@ select.form-input option { background: #0f172a; }
               <label class="checkbox-item"><input type="checkbox" id="gen-facebook" checked> Facebook</label>
               <label class="checkbox-item"><input type="checkbox" id="gen-instagram" checked> Instagram</label>
               <label class="checkbox-item"><input type="checkbox" id="gen-twitter"> X / Twitter</label>
+              <label class="checkbox-item"><input type="checkbox" id="gen-linkedin"> LinkedIn</label>
+              <label class="checkbox-item"><input type="checkbox" id="gen-reddit"> Reddit</label>
             </div>
           </div>
           <div class="form-group">
@@ -930,7 +963,9 @@ What would you like to work on today? You can ask me to:
           <div class="toggle-wrap"><div class="toggle-info"><div class="tl">TikTok auto-post</div><div class="td">Creates drafts only — you add sound + post from phone</div></div><button class="toggle" id="tog-tiktok" onclick="this.classList.toggle('on')"></button></div>
           <div class="toggle-wrap"><div class="toggle-info"><div class="tl">Facebook auto-post</div><div class="td">Posts directly without requiring approval</div></div><button class="toggle on" id="tog-facebook" onclick="this.classList.toggle('on')"></button></div>
           <div class="toggle-wrap"><div class="toggle-info"><div class="tl">Instagram auto-post</div><div class="td">Posts directly without requiring approval</div></div><button class="toggle on" id="tog-instagram" onclick="this.classList.toggle('on')"></button></div>
-          <div class="toggle-wrap" style="border:none"><div class="toggle-info"><div class="tl">X / Twitter auto-post</div><div class="td">Posts directly without requiring approval</div></div><button class="toggle on" id="tog-twitter" onclick="this.classList.toggle('on')"></button></div>
+          <div class="toggle-wrap"><div class="toggle-info"><div class="tl">X / Twitter auto-post</div><div class="td">Posts directly without requiring approval</div></div><button class="toggle on" id="tog-twitter" onclick="this.classList.toggle('on')"></button></div>
+          <div class="toggle-wrap"><div class="toggle-info"><div class="tl">LinkedIn auto-post</div><div class="td">Posts directly without requiring approval</div></div><button class="toggle on" id="tog-linkedin" onclick="this.classList.toggle('on')"></button></div>
+          <div class="toggle-wrap" style="border:none"><div class="toggle-info"><div class="tl">Reddit auto-post</div><div class="td">Posts directly without requiring approval</div></div><button class="toggle on" id="tog-reddit" onclick="this.classList.toggle('on')"></button></div>
         </div>
         <div class="card">
           <div class="card-title">Agent Behaviour</div>
@@ -961,6 +996,16 @@ What would you like to work on today? You can ask me to:
             <div class="api-card-name">X / Twitter</div>
             <div class="api-card-status api-warn" id="api-twitter">⚠ Not tested</div>
             <button class="btn btn-ghost btn-sm" onclick="testPlatform('twitter', this)">Test</button>
+          </div>
+          <div class="api-card">
+            <div class="api-card-name">LinkedIn</div>
+            <div class="api-card-status api-warn" id="api-linkedin">⚠ Not tested</div>
+            <button class="btn btn-ghost btn-sm" onclick="testPlatform('linkedin', this)">Test</button>
+          </div>
+          <div class="api-card">
+            <div class="api-card-name">Reddit</div>
+            <div class="api-card-status api-warn" id="api-reddit">⚠ Not tested</div>
+            <button class="btn btn-ghost btn-sm" onclick="testPlatform('reddit', this)">Test</button>
           </div>
           <div class="api-card">
             <div class="api-card-name">Anthropic AI</div>
@@ -1184,9 +1229,11 @@ async function loadStats() {
     syncPauseBtn();
     if (data.platforms) {
       const p = data.platforms; const total = Math.max(1, Object.values(p).reduce((a,b)=>a+b,0));
-      ['tiktok','facebook','instagram','twitter'].forEach(pl => {
-        document.getElementById('val-'+pl).textContent = p[pl] || 0;
-        setTimeout(()=>{ document.getElementById('bar-'+pl).style.width = Math.round((p[pl]||0)/total*100)+'%'; },100);
+      ['tiktok','facebook','instagram','twitter','linkedin','reddit'].forEach(pl => {
+        if (document.getElementById('val-'+pl)) {
+          document.getElementById('val-'+pl).textContent = p[pl] || 0;
+          setTimeout(()=>{ document.getElementById('bar-'+pl).style.width = Math.round((p[pl]||0)/total*100)+'%'; },100);
+        }
       });
     }
   } else {
@@ -1218,10 +1265,12 @@ function loadDemoStats() {
   document.getElementById('stat-posts-chg').textContent = '↑ 4 this week';
   document.getElementById('draftCount').textContent = '4';
   document.getElementById('loop-drafts').textContent = '4 items in queue';
-  ['tiktok','facebook','instagram','twitter'].forEach((pl,i)=>{
-    const vals = [487000,211000,98000,46000];
-    document.getElementById('val-'+pl).textContent = fmt(vals[i]);
-    setTimeout(()=>{ document.getElementById('bar-'+pl).style.width = Math.round(vals[i]/487000*100)+'%'; },100);
+  ['tiktok','facebook','instagram','twitter','linkedin','reddit'].forEach((pl,i)=>{
+    const vals = [487000,211000,98000,46000,12000,5000];
+    if (document.getElementById('val-'+pl)) {
+      document.getElementById('val-'+pl).textContent = fmt(vals[i]||0);
+      setTimeout(()=>{ document.getElementById('bar-'+pl).style.width = Math.round((vals[i]||0)/487000*100)+'%'; },100);
+    }
   });
 }
 
@@ -1246,10 +1295,13 @@ async function loadAnalytics() {
   const overview = serverOnline ? await apiFetch('/api/analytics/overview') : null;
 
   if (overview) {
-    ['tiktok','facebook','instagram','twitter'].forEach(pl => {
+    const plats = ['tiktok','facebook','instagram','twitter','linkedin','reddit'];
+    plats.forEach(pl => {
       const d = overview[pl] || {};
-      document.getElementById('an-'+pl).textContent = fmt(d.total_views||0);
-      document.getElementById('an-'+pl+'-posts').textContent = (d.total_posts||0)+' posts';
+      if (document.getElementById('an-'+pl)) {
+        document.getElementById('an-'+pl).textContent = fmt(d.total_views||0);
+        document.getElementById('an-'+pl+'-posts').textContent = (d.total_posts||0)+' posts';
+      }
     });
     const topData = serverOnline ? await apiFetch('/api/analytics?days='+days) : null;
     renderTopPosts(topData);
@@ -1258,7 +1310,11 @@ async function loadAnalytics() {
     document.getElementById('an-facebook').textContent = '761K';
     document.getElementById('an-instagram').textContent = '387K';
     document.getElementById('an-twitter').textContent = '142K';
-    ['tiktok','facebook','instagram','twitter'].forEach(pl => document.getElementById('an-'+pl+'-posts').textContent = '18 posts');
+    document.getElementById('an-linkedin').textContent = '89K';
+    document.getElementById('an-reddit').textContent = '24K';
+    ['tiktok','facebook','instagram','twitter','linkedin','reddit'].forEach(pl => {
+        if (document.getElementById('an-'+pl+'-posts')) document.getElementById('an-'+pl+'-posts').textContent = '18 posts';
+    });
     renderTopPosts(null);
   }
 
@@ -1273,6 +1329,8 @@ async function loadAnalytics() {
       {label:'Facebook', data:[80000,110000,160000,211000],  borderColor:'#1877f2',backgroundColor:'rgba(24,119,242,.05)', tension:.4, borderWidth:2, pointRadius:3},
       {label:'Instagram',data:[30000,55000,72000,98000],     borderColor:'#e1306c',backgroundColor:'rgba(225,48,108,.05)',tension:.4, borderWidth:2, pointRadius:3},
       {label:'X',        data:[15000,22000,35000,46000],     borderColor:'#777',  backgroundColor:'rgba(120,120,120,.05)',tension:.4, borderWidth:2, pointRadius:3},
+      {label:'LinkedIn', data:[5000,8000,10500,12000],       borderColor:'#0077b5',backgroundColor:'rgba(0,119,181,.05)',tension:.4, borderWidth:2, pointRadius:3},
+      {label:'Reddit',   data:[1000,2500,4200,5000],         borderColor:'#ff4500',backgroundColor:'rgba(255,69,0,.05)',tension:.4, borderWidth:2, pointRadius:3},
     ]},
     options:{ responsive:true, maintainAspectRatio:false,
       plugins:{legend:{position:'top',labels:{color:'#64748b',font:{size:10},boxWidth:8,padding:12}}},
@@ -1313,7 +1371,7 @@ function filterQueue(status, tabEl) {
 function renderQueue(filter) {
   const el = document.getElementById('queueList');
   let posts = filter === 'all' ? allPosts : allPosts.filter(p => p.status === filter);
-  if (currentFilter && ['tiktok','facebook','instagram','twitter'].includes(currentFilter)) {
+  if (currentFilter && ['tiktok','facebook','instagram','twitter','linkedin','reddit'].includes(currentFilter)) {
     posts = allPosts.filter(p => p.platform === currentFilter);
   }
   if (!posts.length) {
@@ -1553,21 +1611,31 @@ async function generateContent() {
   const theme = document.getElementById('genTheme').value;
   const count = document.getElementById('genCount').value;
   const hook  = document.getElementById('genHook').value;
+  const strategy = document.getElementById('genStrategy').value;
+  const postType = document.getElementById('genPostType').value;
   const instructions = document.getElementById('genInstructions').value;
-  const platforms = ['tiktok','facebook','instagram','twitter'].filter(p=>document.getElementById('gen-'+p)?.checked);
+  const platforms = ['tiktok','facebook','instagram','twitter','linkedin','reddit'].filter(p=>document.getElementById('gen-'+p)?.checked);
 
   if (!platforms.length) { toast('Select at least one platform', 'error'); return; }
 
   const btn = document.getElementById('genBtn');
   btn.textContent = '⏳ Generating...'; btn.disabled = true;
 
-  const prompt = `Generate ${count} intelligence reports for Paperly.\nPlatforms: ${platforms.join(', ')}.\n${theme?'Theme: '+theme+'.\n':''}\n${hook!=='auto'?'Hook style: '+hook+'.\n':''}\n${instructions?'Instructions: '+instructions+'.\n':''}\nReturn reports as JSON with action: "create_reports".`;
-
   const resultEl = document.getElementById('genResult');
   resultEl.style.display = 'block';
 
   if (serverOnline) {
-    const r = await apiFetch('/api/generate', {method:'POST', body:JSON.stringify({platforms, count:parseInt(count), theme:theme||undefined})});
+    const r = await apiFetch('/api/generate', {
+      method:'POST', 
+      body:JSON.stringify({
+        platforms, 
+        count:parseInt(count), 
+        theme:theme||undefined,
+        strategy: strategy,
+        postType: strategy === 'growth' ? postType : undefined,
+        instructions: instructions || undefined
+      })
+    });
     btn.textContent = '✦ Generate with GLIDE'; btn.disabled = false;
     if (r) {
       resultEl.innerHTML = '<div class="info-box green"><div class="ib-icon">✓</div><div>Content generated! Check your <button class="btn btn-ghost btn-sm" onclick="nav(document.querySelector(\'[data-page=queue]\'))">queue →</button></div></div>';
@@ -1580,6 +1648,12 @@ async function generateContent() {
   }
 }
 
+function togglePostTypes() {
+  const strategy = document.getElementById('genStrategy').value;
+  const group = document.getElementById('postTypeGroup');
+  group.style.display = strategy === 'growth' ? 'block' : 'none';
+}
+
 // ── Settings ──────────────────────────────────────────────────
 async function loadSettings() {
   const data = serverOnline ? await apiFetch('/api/settings') : null;
@@ -1587,6 +1661,7 @@ async function loadSettings() {
   const map = {
     'auto_post_tiktok':'tog-tiktok','auto_post_facebook':'tog-facebook',
     'auto_post_instagram':'tog-instagram','auto_post_twitter':'tog-twitter',
+    'auto_post_linkedin':'tog-linkedin','auto_post_reddit':'tog-reddit',
     'posting_paused':'tog-pause'
   };
   for (const [key,id] of Object.entries(map)) {
@@ -1603,6 +1678,8 @@ async function saveSettings() {
     auto_post_facebook:  document.getElementById('tog-facebook')?.classList.contains('on') ? 'true':'false',
     auto_post_instagram: document.getElementById('tog-instagram')?.classList.contains('on') ? 'true':'false',
     auto_post_twitter:   document.getElementById('tog-twitter')?.classList.contains('on') ? 'true':'false',
+    auto_post_linkedin:  document.getElementById('tog-linkedin')?.classList.contains('on') ? 'true':'false',
+    auto_post_reddit:    document.getElementById('tog-reddit')?.classList.contains('on') ? 'true':'false',
     posting_paused:      document.getElementById('tog-pause')?.classList.contains('on') ? 'true':'false',
   };
   if (serverOnline) await apiFetch('/api/settings', {method:'PUT', body:JSON.stringify(settings)});

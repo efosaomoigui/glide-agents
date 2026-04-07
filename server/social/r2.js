@@ -84,35 +84,58 @@ async function getRandomImageFromBucket(keyword = null) {
 
     if (keyword) {
       const searchTerms = keyword.toLowerCase().split(/[^\w\d]+/).filter(t => t.length > 2);
-      let bestScore = 0;
-      let matches = [];
+      
+      // Expanded stop words to filter out generic terms that cause false positives
+      const stopWords = [
+        'today', 'news', 'intel', 'brief', 'post', 'slide', 'image', 'photo', 'picture', 'paperly',
+        'holds', 'against', 'firm', 'says', 'above', 'below', 'after', 'before', 'with', 'from',
+        'this', 'that', 'these', 'those', 'will', 'would', 'could', 'should', 'been', 'being',
+        'have', 'hath', 'does', 'doing', 'into', 'onto', 'upon', 'about', 'across', 'around',
+        'between', 'during', 'through', 'under', 'over', 'while', 'within', 'without'
+      ];
+      const filteredTerms = searchTerms.filter(t => !stopWords.includes(t));
 
-      for (const file of files) {
-        const fileNameLower = file.toLowerCase();
-        let score = 0;
-        for (const term of searchTerms) {
-          if (fileNameLower.includes(term)) score++;
-        }
-        
-        if (score > 0) {
-          if (score > bestScore) {
-            bestScore = score;
-            matches = [file];
-          } else if (score === bestScore) {
-            matches.push(file);
+      if (filteredTerms.length > 0) {
+        let bestScore = 0;
+        let matches = [];
+
+        for (const file of files) {
+          const fileNameLower = file.toLowerCase();
+          let score = 0;
+          
+          for (const term of filteredTerms) {
+            if (fileNameLower.includes(term)) {
+              score++;
+              // Bonus for exact word match
+              const wordRegex = new RegExp(`(^|[^a-z0-9])${term}([^a-z0-9]|$)`, 'i');
+              if (wordRegex.test(fileNameLower)) score += 1.0; // Boosted bonus
+            }
+          }
+          
+          if (score > 0) {
+            if (score > bestScore) {
+              bestScore = score;
+              matches = [file];
+            } else if (score === bestScore) {
+              matches.push(file);
+            }
           }
         }
-      }
 
-      if (matches.length > 0) {
-        selectedFile = matches[Math.floor(Math.random() * matches.length)];
-        console.log(`🎯 R2 Keyword Match (${bestScore} points): ${selectedFile} for "${keyword}"`);
+        // STRICTOR MATCHING: Only use match if score reaches threshold
+        const MIN_SCORE = 2.0;
+        if (matches.length > 0 && bestScore >= MIN_SCORE) {
+          selectedFile = matches[Math.floor(Math.random() * matches.length)];
+          console.log(`🎯 R2 Keyword Match (${bestScore} points): ${selectedFile} for "${keyword}"`);
+        } else if (matches.length > 0) {
+          console.log(`ℹ️ Weak match found (${bestScore} pts) for "${keyword}". Threshold is ${MIN_SCORE}. Skipping.`);
+        }
       }
     }
 
     // If no keyword match, user said "just leave blank" — we return null
     if (!selectedFile) {
-      console.log(`ℹ️ No matching image for "${keyword}" in ${bucket}.`);
+      console.log(`ℹ️ No high-confidence matching image for "${keyword}" in ${bucket}.`);
       return null;
     }
 

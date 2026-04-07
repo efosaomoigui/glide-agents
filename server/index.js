@@ -30,6 +30,8 @@ const { postToFacebook, testFacebookConnection } = require('./social/facebook');
 const { postToInstagram, testInstagramConnection } = require('./social/instagram');
 const { postToTwitter, testTwitterConnection } = require('./social/twitter');
 const { sendTelegramMessage, testTelegramConnection } = require('./social/telegram');
+const { postToLinkedIn, testLinkedInConnection } = require('./social/linkedin');
+const { postToReddit, testRedditConnection } = require('./social/reddit');
 const axios = require('axios');
 const { collectAllAnalytics } = require('./analytics/collector');
 
@@ -160,6 +162,8 @@ db.run(`
     ('auto_post_facebook', 'true'),
     ('auto_post_instagram', 'true'),
     ('auto_post_twitter', 'true'),
+    ('auto_post_linkedin', 'true'),
+    ('auto_post_reddit', 'true'),
     ('posting_paused', 'false'),
     ('daily_post_limit', '4'),
     ('agent_name', 'GLIDE');
@@ -183,6 +187,12 @@ const skillPath = path.join(__dirname, '../GLIDEN_SKILL.md');
 const GLIDE_SKILL = fs.existsSync(skillPath)
   ? fs.readFileSync(skillPath, 'utf8')
   : 'You are GLIDE, the social media marketing agent for PAPERLY.';
+
+// ── Load Personal Growth Skill File ──────────────────────────────────────────
+const growthSkillPath = path.join(__dirname, '../PERSONAL_GROWTH_SKILL.md');
+const GROWTH_SKILL = fs.existsSync(growthSkillPath)
+  ? fs.readFileSync(growthSkillPath, 'utf8')
+  : '';
 
 // ── Load Memory Files ─────────────────────────────────────────────────────────
 function loadMemory() {
@@ -214,7 +224,12 @@ async function chatWithGlide(userMessage, mode = 'chat', includeContext = true) 
 
   // Build system prompt with skill + context
   let systemPrompt = GLIDE_SKILL;
-  systemPrompt += `\n\n## SYSTEM STATUS\n- Social Media APIs (TikTok, FB, IG, X): CONFIGURED & ACTIVE\n- Automation Mode: ENABLED\n- You HAVE full authority to post to the internet once a draft is marked 'approved' or when you use the 'create_posts' action with direct posting enabled.\n- Do NOT tell the user you lack credentials; they are already set in your environment.`;
+  
+  if (GROWTH_SKILL) {
+    systemPrompt += `\n\n${GROWTH_SKILL}`;
+  }
+
+  systemPrompt += `\n\n## SYSTEM STATUS\n- Social Media APIs (TikTok, FB, IG, X, LinkedIn, Reddit): CONFIGURED & ACTIVE\n- Automation Mode: ENABLED\n- You HAVE full authority to post to the internet once a draft is marked 'approved' or when you use the 'create_posts' action with direct posting enabled.\n- Do NOT tell the user you lack credentials; they are already set in your environment.`;
 
   if (includeContext) {
     const memory = loadMemory();
@@ -307,15 +322,60 @@ async function ensureLocalImage(url, topic = 'general') {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
   // STEP 1: LOCAL SEARCH (Priority #1)
-  // Scan local folder for any image whose filename contains keywords from the topic
+  // Scan local folder for the BEST matching image whose filename contains keywords from the topic
   try {
     const localFiles = fs.readdirSync(dir).filter(f => /\.(jpg|jpeg|png|webp)$/i.test(f));
-    const keywords = topic.toLowerCase().split(/[^\w\d]+/).filter(k => k.length > 3);
     
-    for (const file of localFiles) {
-      if (keywords.some(k => file.toLowerCase().includes(k))) {
-        console.log(`🎯 LOCAL MATCH FOUND: Using ${file} for topic "${topic}"`);
-        return `/local-images/${file}`;
+    // Split topic into keywords
+    const keywords = topic.toLowerCase().split(/[^\w\d]+/).filter(k => k.length > 3);
+
+    if (keywords.length > 0) {
+      let bestScore = 0;
+      let matches = [];
+
+      // Expanded stop words for consistency with R2 search
+      const stopWords = [
+        'today', 'news', 'intel', 'brief', 'post', 'slide', 'image', 'photo', 'picture', 'paperly',
+        'holds', 'against', 'firm', 'says', 'above', 'below', 'after', 'before', 'with', 'from',
+        'this', 'that', 'these', 'those', 'will', 'would', 'could', 'should', 'been', 'being',
+        'have', 'hath', 'does', 'doing', 'into', 'onto', 'upon', 'about', 'across', 'around',
+        'between', 'during', 'through', 'under', 'over', 'while', 'within', 'without'
+      ];
+      const finalKeywords = keywords.filter(k => !stopWords.includes(k));
+
+      if (finalKeywords.length > 0) {
+        for (const file of localFiles) {
+          const fileLower = file.toLowerCase();
+          let score = 0;
+          
+          for (const k of finalKeywords) {
+            if (fileLower.includes(k)) {
+              score++;
+              // Bonus for exact word match
+              const wordRegex = new RegExp(`(^|[^a-z0-9])${k}([^a-z0-9]|$)`, 'i');
+              if (wordRegex.test(fileLower)) score += 1.0;
+            }
+          }
+
+          if (score > 0) {
+            if (score > bestScore) {
+              bestScore = score;
+              matches = [file];
+            } else if (score === bestScore) {
+              matches.push(file);
+            }
+          }
+        }
+      }
+
+      const MIN_SCORE = 2.0;
+      if (matches.length > 0 && bestScore >= MIN_SCORE) {
+        // Pick one from the best matches
+        const winner = matches[Math.floor(Math.random() * matches.length)];
+        console.log(`🎯 LOCAL MATCH FOUND (${bestScore} pts): Using ${winner} for topic "${topic}"`);
+        return `/local-images/${winner}`;
+      } else if (matches.length > 0) {
+        console.log(`ℹ️ Weak local match (${bestScore} pts) for "${topic}". Threshold is ${MIN_SCORE}. Skipping.`);
       }
     }
   } catch (err) {
@@ -771,6 +831,8 @@ function getDashboardStats() {
       facebook: (db.run("SELECT COUNT(*) as c FROM posts WHERE platform='facebook' AND status='posted'")[0]?.c) || 0,
       instagram: (db.run("SELECT COUNT(*) as c FROM posts WHERE platform='instagram' AND status='posted'")[0]?.c) || 0,
       twitter: (db.run("SELECT COUNT(*) as c FROM posts WHERE platform='twitter' AND status='posted'")[0]?.c) || 0,
+      linkedin: (db.run("SELECT COUNT(*) as c FROM posts WHERE platform='linkedin' AND status='posted'")[0]?.c) || 0,
+      reddit: (db.run("SELECT COUNT(*) as c FROM posts WHERE platform='reddit' AND status='posted'")[0]?.c) || 0,
     };
 
     const stats = { postsThisWeek, totalViews, totalLikes, draftsQueued, postingPaused, platforms, totalPosts };
@@ -1076,7 +1138,8 @@ app.post('/api/logs/clear', (req, res) => {
 });
 
 // ── Content Prompt Engineering ──────────────────────────────────────────────
-function getGoldenPrompt(sessionName, mode = 'generate') {
+function getGoldenPrompt(sessionName, mode = 'generate', opts = {}) {
+  const { strategy = 'product', postType = 'auto', platforms = [], count = 6 } = opts;
   const researchPath = path.join(__dirname, '../memory/research-data.md');
   const researchData = fs.existsSync(researchPath) ? fs.readFileSync(researchPath, 'utf8') : 'No research data available.';
 
@@ -1106,8 +1169,38 @@ ${localImages.join(', ')}
 Refer to GLIDEN_SKILL.md for your tone. Be sharp, efficient, and data-driven.`;
   }
 
-  return `Generate a high-quality mix of social media posts for Paperly for the ${sessionName}.
-Target: 3 for Facebook, 3 for Instagram.
+  let strategyPrompt = '';
+  if (strategy === 'growth') {
+    strategyPrompt = `
+## CURRENT STRATEGY: PERSONAL AUTHORITY GROWTH MODE
+You are currently generating content to grow the founder's personal brand and authority.
+- Priorities: Expertise visibility, trust, authority, human helpfulness.
+- Specialized Post Type: ${postType === 'auto' ? 'Select the best fit from PERSONAL_GROWTH_SKILL.md' : postType}
+- Refer to PERSONAL_GROWTH_SKILL.md for tone and structural rules.
+- Platforms like LinkedIn and Reddit should strictly follow this mode.
+`;
+  } else {
+    strategyPrompt = `
+## CURRENT STRATEGY: PAPERLY PRODUCT MARKETING MODE
+- Priorities: News-driven traffic to paperly.online, product awareness.
+- Platforms: Facebook, Instagram, Twitter, TikTok.
+`;
+  }
+
+  return `Generate high-quality social media posts for ${sessionName}.
+${strategyPrompt}
+
+## CRITICAL: PLATFORM MODES (DEFAULT)
+- **Facebook / Instagram / Twitter / TikTok**: Usually "Paperly Product Marketing Mode".
+- **LinkedIn / Reddit**: Usually "PERSONAL AUTHORITY GROWTH MODE".
+
+${strategy === 'growth' ? '## OVERRIDE: All selected platforms should prioritze PERSONAL AUTHORITY branding but keep platform-specific nuances.' : ''}
+
+## TARGET PLATFORMS:
+${platforms.length > 0 ? platforms.join(', ') : '2 for Facebook, 2 for Instagram, 1 for LinkedIn, 1 for Reddit'}
+
+## TOTAL POSTS TO GENERATE:
+${count}
 
 ## CURRENT RESEARCH DATA (MANDATORY STORIES):
 ${researchData}
@@ -1166,15 +1259,18 @@ You MUST always include a descriptive keyword or phrase in the image_url field.
 Do NOT generate full HTTP URLs (like Unsplash, Pixabay, etc.). 
 The backend will automatically source matching high-quality assets from our internal Cloudflare R2 'glidebucket'.
 
-1. 🏺 RELEVANCY:
+1. 🏺 RELEVANCY (CRITICAL):
    → Provide a 3-5 word topic string in the image_url field (e.g., "Bola Tinubu Portrait", "Lagos Economy", "CBN Headquarters").
-   → The system will find the best file match in our R2 bucket based on these keywords.
+   → **STRICT MATCHING**: Our system now uses a high-confidence matching threshold. 
+   → If you are not 100% sure a matching image exists in our repository for a story, you MUST leave the image_url field as "" (blank). 
+   → **Wrong images are worse than no image.** 
+   → If you leave image_url blank, the post will use a professional text-only design.
 
 2. 📂 NO WEB FALLBACK:
    → Do NOT attempt to use external web search. Simply provide the most accurate keywords for the story.
-   → If the story is extremely abstract and unlikely to have an image, you can leave image_url as "".
+   → If the story is extremely abstract (e.g., "General growth in Nigeria"), leave image_url as "".
 
-NEVER use a placeholder like "camera.jpg" or a fake URL. Always use real topic keywords.
+NEVER use a placeholder like "camera.jpg" or a fake URL. Always use real topic keywords or blank.
 
 Return ONLY the following JSON (no conversational text before or after):
 \`\`\`json
@@ -1197,7 +1293,7 @@ Return ONLY the following JSON (no conversational text before or after):
           "summary": "...",
           "sector": "...",
           "sources": "Punch · The Nation",
-          "image_url": "/data/local-images/RELEVANT-ASSET.webp" // MANDATORY: Use local images first!
+          "image_url": "Lagos Economy" // Use specific keywords or "" if unsure
         }
       }
     },
@@ -1262,7 +1358,7 @@ CAROUSEL RULES:
 - CTA slide (type: "cta") is also fixed — just pass the type.
 - Use exactly 3 story slides to match the 3 template story slots.
 
-CRITICAL: Output exactly 6 posts (3 FB, 3 IG). Use REAL story-relevant image URLs. Ensure valid JSON. Output ONLY JSON.`;
+CRITICAL: Output exactly ${count} posts for the requested platforms. Use REAL story-relevant image URLs. Ensure valid JSON. Output ONLY JSON.`;
 }
 
 // Temporary test endpoint for Phase 4 verification
@@ -1277,7 +1373,7 @@ app.get('/api/test-session', async (req, res) => {
 
 // Generate content via GLIDE
 app.post('/api/generate', async (req, res) => {
-  const { platforms, count = 6, theme } = req.body;
+  const { platforms, count = 6, theme, strategy, postType } = req.body;
   
   try {
     console.log('🔍 Refreshing intelligence from Paperly.online...');
@@ -1286,7 +1382,7 @@ app.post('/api/generate', async (req, res) => {
     console.error('⚠️ Research fetch failed:', err.message);
   }
 
-  const prompt = getGoldenPrompt('Manual Dashboard', 'generate');
+  const prompt = getGoldenPrompt('Manual Dashboard', 'generate', { strategy, postType, platforms, count });
   try {
     const rawResponse = await chatWithGlide(prompt, 'generate');
     const response = await processAgentResponse(rawResponse);
@@ -1315,6 +1411,12 @@ async function postContent(post) {
         break;
       case 'twitter':
         platformPostId = await postToTwitter(post);
+        break;
+      case 'linkedin':
+        platformPostId = await postToLinkedIn(post);
+        break;
+      case 'reddit':
+        platformPostId = await postToReddit(post);
         break;
       default:
         throw new Error(`Unsupported platform: ${post.platform}`);
