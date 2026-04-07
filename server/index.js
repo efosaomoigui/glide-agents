@@ -264,7 +264,13 @@ async function chatWithGlide(userMessage, mode = 'chat', includeContext = true) 
     const response = await anthropic.messages.create({
       model: 'claude-3-5-sonnet-20240620',
       max_tokens: 4096,
-      system: mode === 'chat' ? `You are GLIDE, a sharp, data-driven intelligence agent. Respond in clean, professional Markdown. Be concise but insightful.\n\n${systemPrompt}` : systemPrompt,
+      system: mode === 'chat' ? `You are GLIDE, a sharp, data-driven intelligence agent. Respond in clean, professional Markdown. Be concise but insightful. 
+      
+      ## CRITICAL: CLEAN CHAT RULES
+      1. NEVER include raw JSON or code blocks in your text response.
+      2. If you are performing a 'create_posts' or other action, provide the JSON in a single JSON block, but DO NOT mention the JSON in your conversational text.
+      3. Your text should focus on the insight and strategy, not the technical data format.
+      \n\n${systemPrompt}` : systemPrompt,
       messages: history.map(h => ({ role: h.role, content: h.content }))
     });
     assistantMessage = response.content[0].text;
@@ -340,16 +346,16 @@ async function processAgentResponse(rawResponse, mode = 'chat') {
   let json = null;
   let jsonStr = '';
 
-  // 1. EXTRACT JSON: Priority to triple backticks, then brace matching
-  const blocks = rawResponse.match(/```(?:json)?\s*([\s\S]*?)```/g);
+  // 1. EXTRACT & STRIP ALL JSON/CODE BLOCKS
+  // We remove all triple-backtick blocks from the 'text' to ensure the user never sees them.
+  const blocks = rawResponse.match(/```[\s\S]*?```/g);
   if (blocks) {
     for (const b of blocks) {
-      const match = b.match(/```(?:json)?\s*([\s\S]*?)```/);
-      if (match && match[1].includes('"action"')) {
-        jsonStr = match[1].trim();
-        text = text.replace(b, '').trim();
-        break;
+      if (b.includes('"action"') && !jsonStr) {
+        const match = b.match(/```(?:json)?\s*([\s\S]*?)```/);
+        if (match) jsonStr = match[1].trim();
       }
+      text = text.replace(b, '').trim();
     }
   } 
 

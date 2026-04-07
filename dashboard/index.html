@@ -1373,7 +1373,6 @@ async function loadHooks() {
   const hooks = data?.length ? data : getDemoHooks();
   renderHooks(hooks, 'hooksList');
 }
-
 async function loadSidebarHooks() {
   const data = serverOnline ? await apiFetch('/api/hooks') : null;
   const hooks = (data?.length ? data : getDemoHooks()).slice(0,3);
@@ -1385,7 +1384,10 @@ async function loadSidebarHooks() {
 
 function renderHooks(hooks, targetId) {
   const el = document.getElementById(targetId);
-  if (!hooks.length) { el.innerHTML = '<div class="empty"><div class="empty-text">No hooks yet</div><div class="empty-sub">Start creating content and GLIDE will track hook performance automatically</div></div>'; return; }
+  if (!hooks || !hooks.length) { 
+    el.innerHTML = '<div class="empty"><div class="empty-text">No hooks yet</div><div class="empty-sub">Start creating content and GLIDE will track hook performance automatically</div></div>'; 
+    return; 
+  }
   el.innerHTML = hooks.map((h,i) => `
     <div class="hook-row">
       <div class="hook-rank${i<3?' top':''}">${i+1}</div>
@@ -1406,6 +1408,9 @@ function addHookPrompt() {
 function markdownToHtml(text) {
   if (!text) return '';
   return text
+    // 1. Hide code blocks (we already extract actions in backend)
+    .replace(/```[\s\S]*?```/g, '')
+    // 2. Format markers
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
     .replace(/\n• (.*?)/g, '<br>• $1')
@@ -1460,12 +1465,21 @@ async function loadChatHistory() {
 
 function appendMsg(role, text, action = null, data = null) {
   const el = document.getElementById('chatMsgs');
+  if (!el) return;
+
+  // Final "Clean Shield": If text is primarily JSON and we have an action, suppress the text.
+  const isJson = text.trim().startsWith('{') && text.trim().endsWith('}') || text.includes('"action":');
+  const displayableText = (isJson && action) ? '' : text;
+
   const div = document.createElement('div');
   div.className = 'msg msg-' + role;
   
-  const bubbleHtml = role === 'agent' ? markdownToHtml(text) : escHtml(text);
+  const bubbleHtml = role === 'agent' ? markdownToHtml(displayableText) : escHtml(text);
   const actionHtml = role === 'agent' ? renderActionComponent(action, data) : '';
   
+  // Only show the message if there's either text or an action card
+  if (!bubbleHtml && !actionHtml && role === 'agent') return;
+
   div.innerHTML = `
     <div class="msg-name">${role==='user'?'You':'GLIDE'}</div>
     <div class="msg-bubble">${bubbleHtml}${actionHtml}</div>
